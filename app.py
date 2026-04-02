@@ -25,7 +25,7 @@ st.markdown("""
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
+        max-width: 1250px;
     }
 
     h1, h2, h3 {
@@ -85,9 +85,59 @@ st.markdown("""
         color: #f8e7b0;
     }
 
-    .stDataFrame {
-        border-radius: 14px;
-        overflow: hidden;
+    .champ-card {
+        padding: 0.75rem;
+        border-radius: 18px;
+        background: rgba(17, 24, 39, 0.90);
+        border: 1px solid rgba(212, 175, 55, 0.16);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.22);
+        margin-bottom: 1rem;
+    }
+
+    .champ-name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #f8e7b0;
+        margin-top: 0.45rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .champ-stat {
+        font-size: 0.92rem;
+        color: #d1d5db;
+        line-height: 1.5;
+    }
+
+    .match-card-win {
+        padding: 0.9rem;
+        border-radius: 18px;
+        background: rgba(220, 252, 231, 0.92);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        color: #052e16;
+        margin-bottom: 1rem;
+    }
+
+    .match-card-loss {
+        padding: 0.9rem;
+        border-radius: 18px;
+        background: rgba(254, 226, 226, 0.92);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        color: #450a0a;
+        margin-bottom: 1rem;
+    }
+
+    .match-title {
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 0.35rem;
+    }
+
+    .match-line {
+        font-size: 0.92rem;
+        line-height: 1.5;
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -96,8 +146,8 @@ st.markdown("""
 <div class="hero-card">
     <div class="hero-title">LoL Draft & Player Analyzer</div>
     <div class="hero-subtitle">
-        Arcane-inspired mood, cleaner visuals, and real Riot API match analysis.
-        Filter by match type and role, review champion trends, and build toward a smart draft recommendation tool.
+        Arcane-inspired mood, cleaner visuals, champion splash art, and real Riot API match analysis.
+        Filter by match type and role, review champion trends, and build toward a smarter draft recommendation tool.
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -111,6 +161,14 @@ headers = {"X-Riot-Token": api_key}
 # ----------------------------
 # Helper functions
 # ----------------------------
+@st.cache_data(show_spinner=False)
+def get_latest_ddragon_version():
+    url = "https://ddragon.leagueoflegends.com/api/versions.json"
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    versions = response.json()
+    return versions[0]
+
 def classify_match_type(queue_id, game_mode):
     if queue_id in [420, 440]:
         return "Ranked"
@@ -140,6 +198,32 @@ def display_role_name(role_value):
     }
     return role_map.get(role_value, role_value)
 
+def champion_to_ddragon_name(champion_name):
+    special_map = {
+        "FiddleSticks": "Fiddlesticks",
+        "MonkeyKing": "MonkeyKing",
+        "KogMaw": "KogMaw",
+        "KhaZix": "Khazix",
+        "RekSai": "RekSai",
+        "Belveth": "Belveth",
+        "Velkoz": "Velkoz",
+        "TahmKench": "TahmKench",
+        "AurelionSol": "AurelionSol",
+        "LeeSin": "LeeSin",
+        "JarvanIV": "JarvanIV",
+        "MissFortune": "MissFortune",
+        "XinZhao": "XinZhao",
+        "TwistedFate": "TwistedFate",
+        "MasterYi": "MasterYi",
+        "DrMundo": "DrMundo",
+    }
+    return special_map.get(champion_name, champion_name)
+
+def get_champion_splash_url(champion_name):
+    version = get_latest_ddragon_version()
+    champ = champion_to_ddragon_name(champion_name)
+    return f"https://ddragon.leagueoflegends.com/cdn/img/champion/loading/{champ}_0.jpg"
+
 def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     fig, ax = plt.subplots(figsize=(9, 4.8))
     fig.patch.set_facecolor("#111827")
@@ -164,7 +248,7 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             height,
-            f"{height:.1f}" if isinstance(height, float) else f"{height}",
+            f"{height:.1f}",
             ha="center",
             va="bottom",
             color="#f8e7b0",
@@ -174,6 +258,60 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
 
     plt.tight_layout()
     return fig
+
+def render_champion_cards(champion_summary_df):
+    cards = champion_summary_df.sort_values(by=["games", "win_rate"], ascending=[False, False]).head(8).to_dict("records")
+
+    for i in range(0, len(cards), 4):
+        row_cards = cards[i:i+4]
+        cols = st.columns(4)
+        for col, card in zip(cols, row_cards):
+            with col:
+                splash_url = get_champion_splash_url(card["champion"])
+                st.markdown('<div class="champ-card">', unsafe_allow_html=True)
+                st.image(splash_url, use_container_width=True)
+                st.markdown(f'<div class="champ-name">{card["champion"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'''
+                    <div class="champ-stat">
+                        Games: {int(card["games"])}<br>
+                        Win Rate: {card["win_rate"]}%<br>
+                        Avg KDA: {card["avg_kda"]}<br>
+                        Avg CS: {card["avg_cs"]}<br>
+                        Avg Damage: {int(card["avg_damage"])}
+                    </div>
+                    ''',
+                    unsafe_allow_html=True
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+
+def render_recent_match_cards(filtered_df):
+    records = filtered_df.sort_values(by="match_id", ascending=False).to_dict("records")
+
+    for i in range(0, len(records), 2):
+        row_matches = records[i:i+2]
+        cols = st.columns(2)
+
+        for col, match in zip(cols, row_matches):
+            with col:
+                splash_url = get_champion_splash_url(match["champion"])
+                card_class = "match-card-win" if match["win"] else "match-card-loss"
+                result_text = "WIN" if match["win"] else "LOSS"
+
+                st.image(splash_url, use_container_width=True)
+                st.markdown(
+                    f'''
+                    <div class="{card_class}">
+                        <div class="match-title">{match["champion"]} • {result_text}</div>
+                        <div class="match-line">Role: {match["role"]} | Type: {match["match_type"]}</div>
+                        <div class="match-line">K / D / A: {match["kills"]} / {match["deaths"]} / {match["assists"]}</div>
+                        <div class="match-line">KDA: {match["kda"]} | CS: {match["cs"]} | Vision: {match["vision_score"]}</div>
+                        <div class="match-line">Damage: {int(match["damage_to_champs"])} | Duration: {match["game_duration_min"]} min</div>
+                        <div class="match-line">Match ID: {match["match_id"]}</div>
+                    </div>
+                    ''',
+                    unsafe_allow_html=True
+                )
 
 # ----------------------------
 # Sidebar controls
@@ -291,7 +429,6 @@ if analyze_clicked:
 
         df = pd.DataFrame(rows)
 
-        # Apply filters
         filtered_df = df.copy()
 
         if match_type_filter != "All":
@@ -304,7 +441,6 @@ if analyze_clicked:
             st.warning("No matches found for that filter combination.")
             st.stop()
 
-        # Champion summary
         champion_summary = (
             filtered_df.groupby("champion")
             .agg(
@@ -335,7 +471,6 @@ if analyze_clicked:
         role_summary["win_rate"] = ((role_summary["wins"] / role_summary["games"]) * 100).round(1)
         role_summary["avg_kda"] = role_summary["avg_kda"].round(2)
 
-        # Metrics
         total_games = len(filtered_df)
         total_wins = int(filtered_df["win"].sum())
         total_losses = total_games - total_wins
@@ -356,7 +491,11 @@ if analyze_clicked:
         c7.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Charts
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.subheader("Top Champions")
+        render_champion_cards(champion_summary)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.subheader("Champion Trends")
 
@@ -388,21 +527,32 @@ if analyze_clicked:
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Tables
-        tab1, tab2, tab3 = st.tabs(["Champion Summary", "Match Details", "Role Summary"])
+        tab1, tab2, tab3 = st.tabs(["Recent Matches", "Champion Summary", "Role Summary"])
 
         with tab1:
-            st.dataframe(
-                champion_summary.sort_values(by=["games", "win_rate"], ascending=[False, False]),
-                use_container_width=True,
-                hide_index=True
-            )
+            render_recent_match_cards(filtered_df)
 
         with tab2:
+            champion_display = champion_summary.copy()
+            champion_display["champion_art"] = champion_display["champion"].apply(get_champion_splash_url)
+            champion_display = champion_display[[
+                "champion_art", "champion", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"
+            ]]
             st.dataframe(
-                filtered_df.sort_values(by="match_id", ascending=False),
+                champion_display,
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
+                column_config={
+                    "champion_art": st.column_config.ImageColumn("Splash Art", width="medium"),
+                    "champion": "Champion",
+                    "games": "Games",
+                    "wins": "Wins",
+                    "losses": "Losses",
+                    "win_rate": "Win Rate %",
+                    "avg_kda": "Avg KDA",
+                    "avg_cs": "Avg CS",
+                    "avg_damage": "Avg Damage"
+                }
             )
 
         with tab3:
@@ -412,13 +562,12 @@ if analyze_clicked:
                 hide_index=True
             )
 
-        # Draft vision note
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.subheader("Toward the Draft Recommender Vision")
         st.write(
-            "This foundation is now strong enough to build the next layer: recommend the best champion from a player’s pool "
+            "This is now strong enough to build the next layer: recommend the best champion from a player’s pool "
             "based on selected role, match type, recent form, and champion performance. "
-            "After that, you can add matchup-aware scoring and draft tiers."
+            "After that, add matchup-aware scoring and S / A / B tier recommendations."
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
