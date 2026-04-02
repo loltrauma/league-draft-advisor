@@ -26,7 +26,7 @@ st.markdown("""
     .block-container {
         padding-top: 1.1rem;
         padding-bottom: 2rem;
-        max-width: 1350px;
+        max-width: 1320px;
     }
 
     h1, h2, h3 {
@@ -35,7 +35,7 @@ st.markdown("""
     }
 
     .hero-card {
-        padding: 1.0rem 1.25rem 0.8rem 1.25rem;
+        padding: 1rem 1.2rem 0.8rem 1.2rem;
         border-radius: 20px;
         background: linear-gradient(135deg, rgba(20,29,48,0.95), rgba(15,23,42,0.88));
         border: 1px solid rgba(212, 175, 55, 0.25);
@@ -112,39 +112,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    .tier-card {
-        padding: 0.85rem;
-        border-radius: 16px;
-        background: rgba(17, 24, 39, 0.88);
-        border: 1px solid rgba(212, 175, 55, 0.15);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-        min-height: 240px;
-    }
-
-    .tier-header {
-        font-size: 1.1rem;
-        font-weight: 800;
-        margin-bottom: 0.65rem;
-    }
-
-    .tier-chip {
-        display: inline-block;
-        padding: 0.25rem 0.55rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 800;
-        margin-bottom: 0.55rem;
-        color: #0f172a;
-        background: #f8e7b0;
-    }
-
-    .tier-line {
-        font-size: 0.9rem;
-        line-height: 1.55;
-        color: #e5e7eb;
-        margin-bottom: 0.5rem;
-    }
-
     .pick-card {
         padding: 0.85rem;
         border-radius: 16px;
@@ -152,11 +119,11 @@ st.markdown("""
         border: 1px solid rgba(212, 175, 55, 0.18);
         box-shadow: 0 6px 18px rgba(0,0,0,0.18);
         text-align: center;
-        min-height: 250px;
+        min-height: 245px;
     }
 
     .pick-label {
-        font-size: 0.85rem;
+        font-size: 0.84rem;
         color: #cbd5e1;
         margin-bottom: 0.45rem;
         font-weight: 700;
@@ -165,7 +132,7 @@ st.markdown("""
     }
 
     .pick-name {
-        font-size: 1.08rem;
+        font-size: 1.05rem;
         font-weight: 800;
         color: #f8e7b0;
         margin-top: 0.45rem;
@@ -176,6 +143,39 @@ st.markdown("""
         font-size: 0.84rem;
         color: #d1d5db;
         line-height: 1.45;
+    }
+
+    .tier-card {
+        padding: 0.8rem;
+        border-radius: 16px;
+        background: rgba(17, 24, 39, 0.88);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        min-height: 210px;
+    }
+
+    .tier-header {
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 0.55rem;
+    }
+
+    .tier-chip {
+        display: inline-block;
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #0f172a;
+        background: #f8e7b0;
+    }
+
+    .tier-line {
+        font-size: 0.88rem;
+        line-height: 1.5;
+        color: #e5e7eb;
+        margin-bottom: 0.45rem;
     }
 
     .mastery-card {
@@ -200,12 +200,6 @@ st.markdown("""
         color: #cbd5e1;
         line-height: 1.35;
     }
-
-    .context-note {
-        font-size: 0.82rem;
-        color: #cbd5e1;
-        margin-top: 0.4rem;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -216,13 +210,14 @@ logo_path = Path("outdraft_logo.png")
 
 st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 if logo_path.exists():
-    c1, c2, c3 = st.columns([1, 2.2, 1])
+    c1, c2, c3 = st.columns([1, 2.1, 1])
     with c2:
         st.image(str(logo_path), use_container_width=True)
 else:
     st.title("Outdraft")
+
 st.markdown(
-    '<div class="hero-subtitle">Player-specific draft analysis built from your own match history. Filter by queue and role, review recent form, and surface the strongest picks from your pool.</div>',
+    '<div class="hero-subtitle">Player-specific draft analysis built from your own match history. Filter by queue and role, then surface the strongest picks from your pool.</div>',
     unsafe_allow_html=True
 )
 st.markdown('</div>', unsafe_allow_html=True)
@@ -303,39 +298,6 @@ def get_champion_square_url(champion_name):
     version = get_latest_ddragon_version()
     champ = champion_to_ddragon_name(champion_name)
     return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champ}.png"
-
-def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
-    fig, ax = plt.subplots(figsize=(8.5, 4.4))
-    fig.patch.set_facecolor("#111827")
-    ax.set_facecolor("#111827")
-
-    bars = ax.bar(labels, values, color=color, edgecolor="#f8e7b0", linewidth=1.0)
-    ax.set_title(title, color="#f8e7b0", fontsize=14, pad=12, fontweight="bold")
-    ax.set_ylabel(ylabel, color="#d1d5db")
-    ax.tick_params(axis="x", colors="#e5e7eb", rotation=35)
-    ax.tick_params(axis="y", colors="#d1d5db")
-
-    for spine in ax.spines.values():
-        spine.set_color("#374151")
-
-    ax.grid(axis="y", linestyle="--", alpha=0.25, color="#9ca3af")
-    ax.set_axisbelow(True)
-
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            height,
-            f"{height:.1f}",
-            ha="center",
-            va="bottom",
-            color="#f8e7b0",
-            fontsize=8.5,
-            fontweight="bold"
-        )
-
-    plt.tight_layout()
-    return fig
 
 def format_rank(entry):
     if not entry:
@@ -574,33 +536,31 @@ def render_mastery_strip(champion_summary_df):
             st.markdown('</div>', unsafe_allow_html=True)
 
 def render_tier_column(df_tiers, tier_label, chip_text):
+    subset = df_tiers[df_tiers["tier"] == tier_label].head(5)
+    if subset.empty:
+        return
+
     st.markdown('<div class="tier-card">', unsafe_allow_html=True)
     st.markdown(f'<div class="tier-header">{tier_label} Tier</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="tier-chip">{chip_text}</div>', unsafe_allow_html=True)
 
-    subset = df_tiers[df_tiers["tier"] == tier_label].head(5)
-    if subset.empty:
-        st.markdown('<div class="tier-line">No champions in this tier yet.</div>', unsafe_allow_html=True)
-    else:
-        for _, row in subset.iterrows():
-            st.markdown(
-                f"""
-                <div class="tier-line">
-                    <strong>{row["champion"]}</strong><br>
-                    Score: {row["tier_score"]} • WR: {row["win_rate"]}% • Games: {int(row["games"])} • KDA: {row["avg_kda"]}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    for _, row in subset.iterrows():
+        st.markdown(
+            f"""
+            <div class="tier-line">
+                <strong>{row["champion"]}</strong><br>
+                Score: {row["tier_score"]} • WR: {row["win_rate"]}% • Games: {int(row["games"])} • KDA: {row["avg_kda"]}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_pick_card(label, row, score_col):
     st.markdown('<div class="pick-card">', unsafe_allow_html=True)
     st.markdown(f'<div class="pick-label">{label}</div>', unsafe_allow_html=True)
 
-    if row is None:
-        st.write("No eligible champion")
-    else:
+    if row is not None:
         st.image(get_champion_square_url(row["champion"]), width=90)
         st.markdown(f'<div class="pick-name">{row["champion"]}</div>', unsafe_allow_html=True)
         st.markdown(
@@ -615,8 +575,43 @@ def render_pick_card(label, row, score_col):
             """,
             unsafe_allow_html=True
         )
+    else:
+        st.write("No eligible champion")
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    fig.patch.set_facecolor("#111827")
+    ax.set_facecolor("#111827")
+
+    bars = ax.bar(labels, values, color=color, edgecolor="#f8e7b0", linewidth=1.0)
+    ax.set_title(title, color="#f8e7b0", fontsize=14, pad=12, fontweight="bold")
+    ax.set_ylabel(ylabel, color="#d1d5db")
+    ax.tick_params(axis="x", colors="#e5e7eb", rotation=35)
+    ax.tick_params(axis="y", colors="#d1d5db")
+
+    for spine in ax.spines.values():
+        spine.set_color("#374151")
+
+    ax.grid(axis="y", linestyle="--", alpha=0.25, color="#9ca3af")
+    ax.set_axisbelow(True)
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height,
+            f"{height:.1f}",
+            ha="center",
+            va="bottom",
+            color="#f8e7b0",
+            fontsize=8.5,
+            fontweight="bold"
+        )
+
+    plt.tight_layout()
+    return fig
 
 # ----------------------------
 # Sidebar
@@ -639,25 +634,20 @@ role_filter = st.sidebar.selectbox(
 st.sidebar.markdown("---")
 st.sidebar.subheader("Draft Context")
 
-player_side = st.sidebar.selectbox("Side", ["Blue", "Red"])
-ally_picks_text = st.sidebar.text_input("Ally picks (comma separated)", "")
-enemy_picks_text = st.sidebar.text_input("Enemy picks (comma separated)", "")
-bans_text = st.sidebar.text_input("Bans (comma separated)", "")
-
-ally_picks = parse_csv_text(ally_picks_text)
-enemy_picks = parse_csv_text(enemy_picks_text)
-bans = parse_csv_text(bans_text)
+ally_picks = parse_csv_text(st.sidebar.text_input("Ally picks", ""))
+enemy_picks = parse_csv_text(st.sidebar.text_input("Enemy picks", ""))
+bans = parse_csv_text(st.sidebar.text_input("Bans", ""))
 
 analyze_clicked = st.sidebar.button("Analyze Player", use_container_width=True)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    '<div class="small-note">Tip: Ranked Solo + one role gives the cleanest signal for player-specific recommendations. Draft inputs now remove unavailable picks and prepare the app for matchup-aware scoring next.</div>',
+    '<div class="small-note">Tip: Ranked Solo + one role gives the cleanest signal. Draft inputs remove unavailable champions from recommendations.</div>',
     unsafe_allow_html=True
 )
 
 # ----------------------------
-# Session state for pagination
+# Session state
 # ----------------------------
 filter_key = f"{game_name}|{tag_line}|{match_type_filter}|{role_filter}"
 
@@ -687,17 +677,12 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
 
         if account_response.status_code != 200:
             st.error(f"Account lookup failed. Status code: {account_response.status_code}")
-            try:
-                st.json(account_response.json())
-            except Exception:
-                st.write(account_response.text)
             st.stop()
 
         puuid = account_response.json()["puuid"]
 
         solo_entry = None
         flex_entry = None
-        rank_context_available = False
 
         summoner_url = f"https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
         summoner_response = requests.get(summoner_url, headers=headers, timeout=20)
@@ -715,7 +700,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                     if isinstance(league_entries, list):
                         solo_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_SOLO_5x5"), None)
                         flex_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"), None)
-                        rank_context_available = True
 
         filtered_df = fetch_filtered_matches(
             puuid=puuid,
@@ -749,53 +733,39 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         tier_df = build_tiers(champion_summary, filtered_df)
         rec_df = build_recommendations(tier_df, ally_picks, enemy_picks, bans)
 
-        role_summary = (
-            filtered_df.groupby("role")
-            .agg(
-                games=("role", "count"),
-                wins=("win", "sum"),
-                avg_kda=("kda", "mean")
-            )
-            .reset_index()
-        )
-        role_summary["win_rate"] = ((role_summary["wins"] / role_summary["games"]) * 100).round(1)
-        role_summary["avg_kda"] = role_summary["avg_kda"].round(2)
-
         total_games = len(filtered_df)
         total_wins = int(filtered_df["win"].sum())
         total_losses = total_games - total_wins
         overall_winrate = round((total_wins / total_games) * 100, 1)
 
-        left_col, right_col = st.columns([1, 2.5], gap="large")
+        tabs = st.tabs(["Match History", "Recommendations", "Mastery", "Graphs"])
 
-        with left_col:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Performance Snapshot")
-            st.metric("Games", total_games)
-            st.metric("Wins", total_wins)
-            st.metric("Losses", total_losses)
-            st.metric("Win Rate", f"{overall_winrate}%")
-            st.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
-            st.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
-            st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
-            st.markdown('</div>', unsafe_allow_html=True)
+        with tabs[0]:
+            top_left, top_right = st.columns([1, 2.2], gap="large")
 
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Matchmaking Context")
-            st.metric("Current Solo Queue Rank", format_rank(solo_entry))
-            st.metric("Current Flex Queue Rank", format_rank(flex_entry))
-            if rank_context_available:
-                st.write("Rank context loaded successfully.")
-            else:
-                st.write("Rank context unavailable for this player or this request.")
-            st.markdown(
-                '<div class="context-note">This uses ranked queue data as context only. Duo/premade effects can influence matchmaking, so treat this as a rank-based proxy, not true hidden MMR.</div>',
-                unsafe_allow_html=True
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+            with top_left:
+                st.subheader("Performance Snapshot")
+                c1, c2 = st.columns(2)
+                c1.metric("Games", total_games)
+                c2.metric("Win Rate", f"{overall_winrate}%")
 
-        with right_col:
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
+                c3, c4 = st.columns(2)
+                c3.metric("Wins", total_wins)
+                c4.metric("Losses", total_losses)
+
+                c5, c6 = st.columns(2)
+                c5.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
+                c6.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
+
+                st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
+                st.metric("Solo Rank", format_rank(solo_entry))
+                st.metric("Flex Rank", format_rank(flex_entry))
+
+            with top_right:
+                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
+                render_recent_match_rows(filtered_df)
+
+        with tabs[1]:
             st.subheader("Recommended Picks")
 
             top_overall = rec_df.iloc[0] if len(rec_df) >= 1 else None
@@ -810,34 +780,66 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
             with p3:
                 render_pick_card("Best Blind", top_blind, "blind_score")
 
-            st.markdown('</div>', unsafe_allow_html=True)
+            shown_any_tier = False
+            tier_cols = st.columns(4)
 
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
-            render_recent_match_rows(filtered_df)
-            st.markdown('</div>', unsafe_allow_html=True)
+            with tier_cols[0]:
+                if not tier_df[tier_df["tier"] == "S"].empty:
+                    render_tier_column(tier_df, "S", "Best current picks")
+                    shown_any_tier = True
+            with tier_cols[1]:
+                if not tier_df[tier_df["tier"] == "A"].empty:
+                    render_tier_column(tier_df, "A", "Strong comfort options")
+                    shown_any_tier = True
+            with tier_cols[2]:
+                if not tier_df[tier_df["tier"] == "B"].empty:
+                    render_tier_column(tier_df, "B", "Playable options")
+                    shown_any_tier = True
+            with tier_cols[3]:
+                if not tier_df[tier_df["tier"] == "C"].empty:
+                    render_tier_column(tier_df, "C", "Low confidence")
+                    shown_any_tier = True
 
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Player-Specific Champion Tiers")
-            t1, t2, t3, t4 = st.columns(4)
-            with t1:
-                render_tier_column(tier_df, "S", "Best current picks")
-            with t2:
-                render_tier_column(tier_df, "A", "Strong comfort options")
-            with t3:
-                render_tier_column(tier_df, "B", "Playable but lower confidence")
-            with t4:
-                render_tier_column(tier_df, "C", "Low confidence / tiny sample")
-            st.markdown('</div>', unsafe_allow_html=True)
+            if not shown_any_tier:
+                st.info("No recommendation tiers available yet.")
 
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Champion Trends")
-            chart_col1, chart_col2 = st.columns(2)
+        with tabs[2]:
+            st.subheader("Champion Mastery")
+
+            render_mastery_strip(champion_summary)
+
+            mastery_table = champion_summary.copy()
+            mastery_table["champion_art"] = mastery_table["champion"].apply(get_champion_square_url)
+            mastery_table = mastery_table[
+                ["champion_art", "champion", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"]
+            ]
+
+            st.dataframe(
+                mastery_table.sort_values(by=["games", "win_rate"], ascending=[False, False]),
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "champion_art": st.column_config.ImageColumn("Champion", width="small"),
+                    "champion": "Name",
+                    "games": "Games",
+                    "wins": "Wins",
+                    "losses": "Losses",
+                    "win_rate": "Win Rate %",
+                    "avg_kda": "Avg KDA",
+                    "avg_cs": "Avg CS",
+                    "avg_damage": "Avg Damage"
+                }
+            )
+
+        with tabs[3]:
+            st.subheader("Graphs")
+
+            graph_cols = st.columns(2)
 
             top_champs = champion_summary.sort_values(by="games", ascending=False).head(8)
             top_winrate = champion_summary.sort_values(by="win_rate", ascending=False).head(8)
 
-            with chart_col1:
+            with graph_cols[0]:
                 if not top_champs.empty:
                     fig1 = make_bar_chart(
                         top_champs["champion"],
@@ -847,7 +849,7 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                     )
                     st.pyplot(fig1)
 
-            with chart_col2:
+            with graph_cols[1]:
                 if not top_winrate.empty:
                     fig2 = make_bar_chart(
                         top_winrate["champion"],
@@ -857,54 +859,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                         color="#6f86a6"
                     )
                     st.pyplot(fig2)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            tab1, tab2 = st.tabs(["Champion Summary", "Role Summary"])
-
-            with tab1:
-                champion_display = rec_df.copy() if not rec_df.empty else tier_df.copy()
-                champion_display["champion_art"] = champion_display["champion"].apply(get_champion_square_url)
-
-                display_cols = ["champion_art", "champion", "tier", "tier_score", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"]
-                if "overall_score" in champion_display.columns:
-                    display_cols.insert(3, "overall_score")
-
-                champion_display = champion_display[display_cols]
-
-                column_cfg = {
-                    "champion_art": st.column_config.ImageColumn("Champion", width="small"),
-                    "champion": "Name",
-                    "tier": "Tier",
-                    "tier_score": "Tier Score",
-                    "games": "Games",
-                    "wins": "Wins",
-                    "losses": "Losses",
-                    "win_rate": "Win Rate %",
-                    "avg_kda": "Avg KDA",
-                    "avg_cs": "Avg CS",
-                    "avg_damage": "Avg Damage"
-                }
-                if "overall_score" in champion_display.columns:
-                    column_cfg["overall_score"] = "Overall Score"
-
-                st.dataframe(
-                    champion_display,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config=column_cfg
-                )
-
-            with tab2:
-                st.dataframe(
-                    role_summary.sort_values(by="games", ascending=False),
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-            st.markdown('<div class="section-card">', unsafe_allow_html=True)
-            st.subheader("Champion Mastery Strip")
-            render_mastery_strip(champion_summary)
-            st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, and click Analyze Player.")
