@@ -294,6 +294,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------
+# Core config / Riot auth
+# ----------------------------
+api_key = st.secrets["RIOT_API_KEY"]
+headers = {"X-Riot-Token": api_key}
+
+# ----------------------------
 # Region routing
 # ----------------------------
 PLATFORM_OPTIONS = {
@@ -863,7 +869,6 @@ load_more_clicked = st.sidebar.button("Load More Games", use_container_width=Tru
 if load_more_clicked:
     st.session_state.games_to_show += 20
 
-# treat refresh as a rerun trigger
 trigger_analysis = analyze_clicked or refresh_clicked or "last_loaded_filter_key" in st.session_state
 
 # ----------------------------
