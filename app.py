@@ -48,6 +48,7 @@ st.markdown("""
         color: #cfd6e4;
         line-height: 1.55;
         margin-top: 0.4rem;
+        margin-bottom: 0.8rem;
     }
 
     .section-card {
@@ -206,8 +207,8 @@ st.markdown("""
     .match-card-win {
         padding: 0.74rem 0.84rem;
         border-radius: 14px;
-        background: rgba(34, 197, 94, 0.28);
-        border: 1px solid rgba(134, 239, 172, 0.66);
+        background: rgba(34, 197, 94, 0.25);
+        border: 1px solid rgba(134, 239, 172, 0.70);
         box-shadow: 0 6px 14px rgba(0,0,0,0.15);
         color: #ecfdf5;
         margin-bottom: 0.65rem;
@@ -216,8 +217,8 @@ st.markdown("""
     .match-card-loss {
         padding: 0.74rem 0.84rem;
         border-radius: 14px;
-        background: rgba(239, 68, 68, 0.25);
-        border: 1px solid rgba(252, 165, 165, 0.66);
+        background: rgba(239, 68, 68, 0.22);
+        border: 1px solid rgba(252, 165, 165, 0.70);
         box-shadow: 0 6px 14px rgba(0,0,0,0.15);
         color: #fef2f2;
         margin-bottom: 0.65rem;
@@ -259,25 +260,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# ----------------------------
-# Header
-# ----------------------------
-logo_path = Path("outdraft_logo.png")
-
-st.markdown('<div class="hero-card">', unsafe_allow_html=True)
-if logo_path.exists():
-    c1, c2, c3 = st.columns([1, 2.0, 1])
-    with c2:
-        st.image(str(logo_path), use_container_width=True)
-else:
-    st.title("Outdraft")
-
-st.markdown(
-    '<div class="hero-subtitle">Built to reduce draft anxiety and surface your smartest picks fast. Outdraft focuses on clarity, confidence, and your actual champion pool.</div>',
-    unsafe_allow_html=True
-)
-st.markdown('</div>', unsafe_allow_html=True)
 
 api_key = st.secrets["RIOT_API_KEY"]
 headers = {"X-Riot-Token": api_key}
@@ -363,6 +345,13 @@ def format_rank(entry):
 
 def parse_csv_text(text):
     return [x.strip() for x in text.split(",") if x.strip()]
+
+def split_riot_id(full_input):
+    full_input = full_input.strip()
+    if "#" in full_input:
+        name, tag = full_input.split("#", 1)
+        return name.strip(), tag.strip()
+    return full_input, ""
 
 def compute_recent_form(filtered_df, champion_name):
     champ_games = filtered_df[filtered_df["champion"] == champion_name].copy()
@@ -726,12 +715,40 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     return fig
 
 # ----------------------------
+# Header + Riot ID input under logo
+# ----------------------------
+logo_path = Path("outdraft_logo.png")
+
+st.markdown('<div class="hero-card">', unsafe_allow_html=True)
+if logo_path.exists():
+    c1, c2, c3 = st.columns([1, 2.0, 1])
+    with c2:
+        st.image(str(logo_path), use_container_width=True)
+else:
+    st.title("Outdraft")
+
+st.markdown(
+    '<div class="hero-subtitle">Built to reduce draft anxiety and surface your smartest picks fast. Outdraft focuses on clarity, confidence, and your actual champion pool.</div>',
+    unsafe_allow_html=True
+)
+
+search_col1, search_col2, search_col3 = st.columns([2.2, 1, 0.9])
+with search_col1:
+    riot_id_input = st.text_input("Riot ID", "HE TAKE ME#OHNO")
+with search_col2:
+    tag_override = st.text_input("Tag override (optional)", "")
+with search_col3:
+    analyze_clicked = st.button("Analyze", use_container_width=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+game_name, parsed_tag = split_riot_id(riot_id_input)
+tag_line = tag_override.strip() if tag_override.strip() else parsed_tag
+
+# ----------------------------
 # Sidebar
 # ----------------------------
-st.sidebar.header("Player & Filter Controls")
-
-game_name = st.sidebar.text_input("Riot ID name", "HE TAKE ME")
-tag_line = st.sidebar.text_input("Riot ID tag", "OHNO")
+st.sidebar.header("Filters")
 
 match_type_filter = st.sidebar.selectbox(
     "Queue / Match type",
@@ -750,11 +767,9 @@ ally_picks = parse_csv_text(st.sidebar.text_input("Ally picks", ""))
 enemy_picks = parse_csv_text(st.sidebar.text_input("Enemy picks", ""))
 bans = parse_csv_text(st.sidebar.text_input("Bans", ""))
 
-analyze_clicked = st.sidebar.button("Analyze Player", use_container_width=True)
-
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    '<div class="subtle-text">Tip: Start with Ranked Solo + one role. Keeping inputs simple makes the recommendations feel clearer and more trustworthy.</div>',
+    '<div class="subtle-text">Tip: start with Ranked Solo + one role. Use the Draft tab after that if you want pick recommendations.</div>',
     unsafe_allow_html=True
 )
 
@@ -781,6 +796,10 @@ if load_more_clicked:
 # Main
 # ----------------------------
 if analyze_clicked or "last_loaded_filter_key" in st.session_state:
+    if not game_name or not tag_line:
+        st.error("Please enter a Riot ID like Name#TAG.")
+        st.stop()
+
     st.session_state.last_loaded_filter_key = filter_key
 
     with st.spinner("Pulling Riot data and building your profile..."):
@@ -850,7 +869,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         total_losses = total_games - total_wins
         overall_winrate = round((total_wins / total_games) * 100, 1)
 
-        # Applied filters
         chips = [
             match_type_filter,
             role_filter,
@@ -866,9 +884,34 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         chip_html = "".join([f'<span class="filter-chip">{chip}</span>' for chip in chips])
         st.markdown(chip_html, unsafe_allow_html=True)
 
-        tabs = st.tabs(["Draft", "Match History", "Mastery", "Graphs"])
+        tabs = st.tabs(["Match History", "Draft", "Mastery", "Graphs"])
 
         with tabs[0]:
+            left_col, right_col = st.columns([1, 2.2], gap="large")
+
+            with left_col:
+                st.subheader("Performance Snapshot")
+                a, b = st.columns(2)
+                a.metric("Games", total_games)
+                b.metric("Win Rate", f"{overall_winrate}%")
+
+                c, d = st.columns(2)
+                c.metric("Wins", total_wins)
+                d.metric("Losses", total_losses)
+
+                e, f = st.columns(2)
+                e.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
+                f.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
+
+                st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
+                st.metric("Solo Rank", format_rank(solo_entry))
+                st.metric("Flex Rank", format_rank(flex_entry))
+
+            with right_col:
+                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
+                render_recent_match_rows(filtered_df)
+
+        with tabs[1]:
             st.subheader("Recommended Picks")
 
             used_champs = set()
@@ -897,31 +940,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                 for col, tier in zip(tier_cols, present_tiers):
                     with col:
                         render_tier_column(tier_df, tier, tier_labels[tier])
-
-        with tabs[1]:
-            left_col, right_col = st.columns([1, 2.2], gap="large")
-
-            with left_col:
-                st.subheader("Performance Snapshot")
-                a, b = st.columns(2)
-                a.metric("Games", total_games)
-                b.metric("Win Rate", f"{overall_winrate}%")
-
-                c, d = st.columns(2)
-                c.metric("Wins", total_wins)
-                d.metric("Losses", total_losses)
-
-                e, f = st.columns(2)
-                e.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
-                f.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
-
-                st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
-                st.metric("Solo Rank", format_rank(solo_entry))
-                st.metric("Flex Rank", format_rank(flex_entry))
-
-            with right_col:
-                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
-                render_recent_match_rows(filtered_df)
 
         with tabs[2]:
             st.subheader("Champion Mastery")
@@ -980,4 +998,4 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                     st.pyplot(fig2)
 
 else:
-    st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, then click Analyze Player.")
+    st.info("Enter a Riot ID under the logo, choose filters in the sidebar, and click Analyze.")
