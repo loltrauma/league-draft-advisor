@@ -2,9 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 st.set_page_config(
-    page_title="LoL Draft & Player Analyzer",
+    page_title="Outdraft",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -23,9 +24,9 @@ st.markdown("""
     }
 
     .block-container {
-        padding-top: 1.3rem;
+        padding-top: 1.1rem;
         padding-bottom: 2rem;
-        max-width: 1320px;
+        max-width: 1350px;
     }
 
     h1, h2, h3 {
@@ -34,7 +35,7 @@ st.markdown("""
     }
 
     .hero-card {
-        padding: 1.15rem 1.4rem;
+        padding: 1.0rem 1.25rem 0.8rem 1.25rem;
         border-radius: 20px;
         background: linear-gradient(135deg, rgba(20,29,48,0.95), rgba(15,23,42,0.88));
         border: 1px solid rgba(212, 175, 55, 0.25);
@@ -42,17 +43,11 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    .hero-title {
-        font-size: 1.95rem;
-        font-weight: 800;
-        margin-bottom: 0.25rem;
-        color: #f8e7b0;
-    }
-
     .hero-subtitle {
-        font-size: 0.96rem;
+        font-size: 0.95rem;
         color: #d1d5db;
         line-height: 1.55;
+        margin-top: 0.35rem;
     }
 
     .section-card {
@@ -88,8 +83,8 @@ st.markdown("""
     .match-card-win {
         padding: 0.72rem 0.82rem;
         border-radius: 14px;
-        background: rgba(34, 197, 94, 0.26);
-        border: 1px solid rgba(134, 239, 172, 0.60);
+        background: rgba(34, 197, 94, 0.28);
+        border: 1px solid rgba(134, 239, 172, 0.68);
         box-shadow: 0 6px 14px rgba(0,0,0,0.16);
         color: #ecfdf5;
         margin-bottom: 0.65rem;
@@ -98,8 +93,8 @@ st.markdown("""
     .match-card-loss {
         padding: 0.72rem 0.82rem;
         border-radius: 14px;
-        background: rgba(239, 68, 68, 0.24);
-        border: 1px solid rgba(252, 165, 165, 0.62);
+        background: rgba(239, 68, 68, 0.26);
+        border: 1px solid rgba(252, 165, 165, 0.68);
         box-shadow: 0 6px 14px rgba(0,0,0,0.16);
         color: #fef2f2;
         margin-bottom: 0.65rem;
@@ -150,6 +145,39 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
 
+    .pick-card {
+        padding: 0.85rem;
+        border-radius: 16px;
+        background: rgba(17, 24, 39, 0.90);
+        border: 1px solid rgba(212, 175, 55, 0.18);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        text-align: center;
+        min-height: 250px;
+    }
+
+    .pick-label {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        margin-bottom: 0.45rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .pick-name {
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: #f8e7b0;
+        margin-top: 0.45rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .pick-stat {
+        font-size: 0.84rem;
+        color: #d1d5db;
+        line-height: 1.45;
+    }
+
     .mastery-card {
         text-align: center;
         padding: 0.55rem;
@@ -181,15 +209,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<div class="hero-card">
-    <div class="hero-title">LoL Draft & Player Analyzer</div>
-    <div class="hero-subtitle">
-        Queue-aware player analysis with compact match history, player-specific champion tiers,
-        ranked context, and a mastery strip built to evolve into a draft recommender.
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# ----------------------------
+# Header
+# ----------------------------
+logo_path = Path("outdraft_logo.png")
+
+st.markdown('<div class="hero-card">', unsafe_allow_html=True)
+if logo_path.exists():
+    c1, c2, c3 = st.columns([1, 2.2, 1])
+    with c2:
+        st.image(str(logo_path), use_container_width=True)
+else:
+    st.title("Outdraft")
+st.markdown(
+    '<div class="hero-subtitle">Player-specific draft analysis built from your own match history. Filter by queue and role, review recent form, and surface the strongest picks from your pool.</div>',
+    unsafe_allow_html=True
+)
+st.markdown('</div>', unsafe_allow_html=True)
 
 api_key = st.secrets["RIOT_API_KEY"]
 headers = {"X-Riot-Token": api_key}
@@ -274,7 +310,6 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     ax.set_facecolor("#111827")
 
     bars = ax.bar(labels, values, color=color, edgecolor="#f8e7b0", linewidth=1.0)
-
     ax.set_title(title, color="#f8e7b0", fontsize=14, pad=12, fontweight="bold")
     ax.set_ylabel(ylabel, color="#d1d5db")
     ax.tick_params(axis="x", colors="#e5e7eb", rotation=35)
@@ -306,6 +341,9 @@ def format_rank(entry):
     if not entry:
         return "Unavailable"
     return f'{entry.get("tier", "")} {entry.get("rank", "")} • {entry.get("leaguePoints", 0)} LP'
+
+def parse_csv_text(text):
+    return [x.strip() for x in text.split(",") if x.strip()]
 
 def compute_recent_form(filtered_df, champion_name):
     champ_games = filtered_df[filtered_df["champion"] == champion_name].copy()
@@ -352,6 +390,115 @@ def build_tiers(champion_summary, filtered_df):
 
     working["tier"] = working["tier_score"].apply(score_to_tier)
     return working.sort_values(by=["tier_score", "games"], ascending=[False, False])
+
+def build_recommendations(tier_df, ally_picks, enemy_picks, bans):
+    if tier_df.empty:
+        return pd.DataFrame()
+
+    unavailable = set(ally_picks + enemy_picks + bans)
+    recs = tier_df[~tier_df["champion"].isin(unavailable)].copy()
+
+    if recs.empty:
+        return recs
+
+    max_games = recs["games"].max() if recs["games"].max() > 0 else 1
+
+    recs["comfort_score"] = (
+        recs["tier_score"] * 0.55 +
+        (recs["games"] / max_games) * 100 * 0.45
+    ).round(1)
+
+    recs["blind_score"] = (
+        recs["win_rate"] * 0.50 +
+        recs["tier_score"] * 0.30 +
+        (recs["games"] / max_games) * 100 * 0.20
+    ).round(1)
+
+    recs["overall_score"] = (
+        recs["tier_score"] * 0.70 +
+        recs["comfort_score"] * 0.20 +
+        recs["blind_score"] * 0.10
+    ).round(1)
+
+    return recs.sort_values(by="overall_score", ascending=False)
+
+def fetch_filtered_matches(puuid, selected_match_type, selected_role, desired_count):
+    collected_rows = []
+    start = 0
+    chunk_size = 100
+    max_scan = 500
+
+    while len(collected_rows) < desired_count and start < max_scan:
+        ids_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={chunk_size}"
+        ids_response = requests.get(ids_url, headers=headers, timeout=20)
+
+        if ids_response.status_code != 200:
+            break
+
+        match_ids = ids_response.json()
+        if not match_ids:
+            break
+
+        for match_id in match_ids:
+            if len(collected_rows) >= desired_count:
+                break
+
+            match_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{match_id}"
+            match_response = requests.get(match_url, headers=headers, timeout=20)
+
+            if match_response.status_code != 200:
+                continue
+
+            match_data = match_response.json()
+            info = match_data.get("info", {})
+            participants = info.get("participants", [])
+
+            player_data = None
+            for participant in participants:
+                if participant.get("puuid") == puuid:
+                    player_data = participant
+                    break
+
+            if player_data is None:
+                continue
+
+            queue_id = info.get("queueId", -1)
+            game_mode = info.get("gameMode", "Unknown")
+            match_type = classify_match_type(queue_id, game_mode)
+
+            role_raw = normalize_role(player_data.get("teamPosition", "UNKNOWN"))
+            role_display = display_role_name(role_raw)
+
+            if selected_match_type != "All" and match_type != selected_match_type:
+                continue
+
+            if selected_role != "All" and role_display != selected_role:
+                continue
+
+            kills = player_data.get("kills", 0)
+            deaths = player_data.get("deaths", 0)
+            assists = player_data.get("assists", 0)
+
+            collected_rows.append({
+                "match_id": match_id,
+                "champion": player_data.get("championName", "Unknown"),
+                "role": role_display,
+                "match_type": match_type,
+                "win": player_data.get("win", False),
+                "kills": kills,
+                "deaths": deaths,
+                "assists": assists,
+                "kda": round((kills + assists) / max(1, deaths), 2),
+                "cs": player_data.get("totalMinionsKilled", 0) + player_data.get("neutralMinionsKilled", 0),
+                "vision_score": player_data.get("visionScore", 0),
+                "damage_to_champs": player_data.get("totalDamageDealtToChampions", 0),
+                "queue_id": queue_id,
+                "game_duration_min": round(info.get("gameDuration", 0) / 60, 1)
+            })
+
+        start += chunk_size
+
+    return pd.DataFrame(collected_rows)
 
 def render_recent_match_rows(filtered_df):
     records = filtered_df.sort_values(by="match_id", ascending=False).to_dict("records")
@@ -447,87 +594,29 @@ def render_tier_column(df_tiers, tier_label, chip_text):
             )
     st.markdown('</div>', unsafe_allow_html=True)
 
-def fetch_filtered_matches(puuid, selected_match_type, selected_role, desired_count):
-    """
-    Pull recent match IDs in chunks, then keep only matches matching the selected type/role
-    until we have the desired number.
-    """
-    collected_rows = []
-    start = 0
-    chunk_size = 100
-    max_scan = 400
+def render_pick_card(label, row, score_col):
+    st.markdown('<div class="pick-card">', unsafe_allow_html=True)
+    st.markdown(f'<div class="pick-label">{label}</div>', unsafe_allow_html=True)
 
-    while len(collected_rows) < desired_count and start < max_scan:
-        ids_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={chunk_size}"
-        ids_response = requests.get(ids_url, headers=headers, timeout=20)
+    if row is None:
+        st.write("No eligible champion")
+    else:
+        st.image(get_champion_square_url(row["champion"]), width=90)
+        st.markdown(f'<div class="pick-name">{row["champion"]}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div class="pick-stat">
+                {score_col.replace("_", " ").title()}: {row[score_col]}<br>
+                Tier: {row["tier"]}<br>
+                Games: {int(row["games"])}<br>
+                Win Rate: {row["win_rate"]}%<br>
+                Avg KDA: {row["avg_kda"]}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        if ids_response.status_code != 200:
-            break
-
-        match_ids = ids_response.json()
-        if not match_ids:
-            break
-
-        for match_id in match_ids:
-            if len(collected_rows) >= desired_count:
-                break
-
-            match_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/{match_id}"
-            match_response = requests.get(match_url, headers=headers, timeout=20)
-
-            if match_response.status_code != 200:
-                continue
-
-            match_data = match_response.json()
-            info = match_data.get("info", {})
-            participants = info.get("participants", [])
-
-            player_data = None
-            for participant in participants:
-                if participant.get("puuid") == puuid:
-                    player_data = participant
-                    break
-
-            if player_data is None:
-                continue
-
-            queue_id = info.get("queueId", -1)
-            game_mode = info.get("gameMode", "Unknown")
-            match_type = classify_match_type(queue_id, game_mode)
-
-            role_raw = normalize_role(player_data.get("teamPosition", "UNKNOWN"))
-            role_display = display_role_name(role_raw)
-
-            if selected_match_type != "All" and match_type != selected_match_type:
-                continue
-
-            if selected_role != "All" and role_display != selected_role:
-                continue
-
-            kills = player_data.get("kills", 0)
-            deaths = player_data.get("deaths", 0)
-            assists = player_data.get("assists", 0)
-
-            collected_rows.append({
-                "match_id": match_id,
-                "champion": player_data.get("championName", "Unknown"),
-                "role": role_display,
-                "match_type": match_type,
-                "win": player_data.get("win", False),
-                "kills": kills,
-                "deaths": deaths,
-                "assists": assists,
-                "kda": round((kills + assists) / max(1, deaths), 2),
-                "cs": player_data.get("totalMinionsKilled", 0) + player_data.get("neutralMinionsKilled", 0),
-                "vision_score": player_data.get("visionScore", 0),
-                "damage_to_champs": player_data.get("totalDamageDealtToChampions", 0),
-                "queue_id": queue_id,
-                "game_duration_min": round(info.get("gameDuration", 0) / 60, 1)
-            })
-
-        start += chunk_size
-
-    return pd.DataFrame(collected_rows)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------------------
 # Sidebar
@@ -547,11 +636,23 @@ role_filter = st.sidebar.selectbox(
     ["All", "Top", "Jungle", "Mid", "ADC", "Support"]
 )
 
+st.sidebar.markdown("---")
+st.sidebar.subheader("Draft Context")
+
+player_side = st.sidebar.selectbox("Side", ["Blue", "Red"])
+ally_picks_text = st.sidebar.text_input("Ally picks (comma separated)", "")
+enemy_picks_text = st.sidebar.text_input("Enemy picks (comma separated)", "")
+bans_text = st.sidebar.text_input("Bans (comma separated)", "")
+
+ally_picks = parse_csv_text(ally_picks_text)
+enemy_picks = parse_csv_text(enemy_picks_text)
+bans = parse_csv_text(bans_text)
+
 analyze_clicked = st.sidebar.button("Analyze Player", use_container_width=True)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    '<div class="small-note">Tip: Ranked Solo + one role gives the cleanest signal for champion recommendations.</div>',
+    '<div class="small-note">Tip: Ranked Solo + one role gives the cleanest signal for player-specific recommendations. Draft inputs now remove unavailable picks and prepare the app for matchup-aware scoring next.</div>',
     unsafe_allow_html=True
 )
 
@@ -594,7 +695,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
 
         puuid = account_response.json()["puuid"]
 
-        # rank context
         solo_entry = None
         flex_entry = None
         rank_context_available = False
@@ -617,7 +717,6 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                         flex_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"), None)
                         rank_context_available = True
 
-        # Automatically fetch enough filtered games based on selected type/role
         filtered_df = fetch_filtered_matches(
             puuid=puuid,
             selected_match_type=match_type_filter,
@@ -648,6 +747,7 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         champion_summary["avg_damage"] = champion_summary["avg_damage"].round(0)
 
         tier_df = build_tiers(champion_summary, filtered_df)
+        rec_df = build_recommendations(tier_df, ally_picks, enemy_picks, bans)
 
         role_summary = (
             filtered_df.groupby("role")
@@ -666,8 +766,7 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         total_losses = total_games - total_wins
         overall_winrate = round((total_wins / total_games) * 100, 1)
 
-        # Layout: left snapshot column, right main content
-        left_col, right_col = st.columns([1, 2.4], gap="large")
+        left_col, right_col = st.columns([1, 2.5], gap="large")
 
         with left_col:
             st.markdown('<div class="section-card">', unsafe_allow_html=True)
@@ -696,6 +795,23 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
             st.markdown('</div>', unsafe_allow_html=True)
 
         with right_col:
+            st.markdown('<div class="section-card">', unsafe_allow_html=True)
+            st.subheader("Recommended Picks")
+
+            top_overall = rec_df.iloc[0] if len(rec_df) >= 1 else None
+            top_comfort = rec_df.sort_values(by="comfort_score", ascending=False).iloc[0] if len(rec_df) >= 1 else None
+            top_blind = rec_df.sort_values(by="blind_score", ascending=False).iloc[0] if len(rec_df) >= 1 else None
+
+            p1, p2, p3 = st.columns(3)
+            with p1:
+                render_pick_card("Best Overall", top_overall, "overall_score")
+            with p2:
+                render_pick_card("Best Comfort", top_comfort, "comfort_score")
+            with p3:
+                render_pick_card("Best Blind", top_blind, "blind_score")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
             st.markdown('<div class="section-card">', unsafe_allow_html=True)
             st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
             render_recent_match_rows(filtered_df)
@@ -746,28 +862,36 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
             tab1, tab2 = st.tabs(["Champion Summary", "Role Summary"])
 
             with tab1:
-                champion_display = tier_df.copy()
+                champion_display = rec_df.copy() if not rec_df.empty else tier_df.copy()
                 champion_display["champion_art"] = champion_display["champion"].apply(get_champion_square_url)
-                champion_display = champion_display[
-                    ["champion_art", "champion", "tier", "tier_score", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"]
-                ]
+
+                display_cols = ["champion_art", "champion", "tier", "tier_score", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"]
+                if "overall_score" in champion_display.columns:
+                    display_cols.insert(3, "overall_score")
+
+                champion_display = champion_display[display_cols]
+
+                column_cfg = {
+                    "champion_art": st.column_config.ImageColumn("Champion", width="small"),
+                    "champion": "Name",
+                    "tier": "Tier",
+                    "tier_score": "Tier Score",
+                    "games": "Games",
+                    "wins": "Wins",
+                    "losses": "Losses",
+                    "win_rate": "Win Rate %",
+                    "avg_kda": "Avg KDA",
+                    "avg_cs": "Avg CS",
+                    "avg_damage": "Avg Damage"
+                }
+                if "overall_score" in champion_display.columns:
+                    column_cfg["overall_score"] = "Overall Score"
+
                 st.dataframe(
                     champion_display,
                     use_container_width=True,
                     hide_index=True,
-                    column_config={
-                        "champion_art": st.column_config.ImageColumn("Champion", width="small"),
-                        "champion": "Name",
-                        "tier": "Tier",
-                        "tier_score": "Score",
-                        "games": "Games",
-                        "wins": "Wins",
-                        "losses": "Losses",
-                        "win_rate": "Win Rate %",
-                        "avg_kda": "Avg KDA",
-                        "avg_cs": "Avg CS",
-                        "avg_damage": "Avg Damage"
-                    }
+                    column_config=column_cfg
                 )
 
             with tab2:
@@ -783,4 +907,4 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
             st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, then click Analyze Player.")
+    st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, and click Analyze Player.")
