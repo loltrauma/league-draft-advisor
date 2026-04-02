@@ -24,52 +24,65 @@ st.markdown("""
     }
 
     .block-container {
-        padding-top: 1.1rem;
+        padding-top: 1.0rem;
         padding-bottom: 2rem;
         max-width: 1320px;
     }
 
     h1, h2, h3 {
         color: #f8e7b0;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
     }
 
     .hero-card {
-        padding: 1rem 1.2rem 0.8rem 1.2rem;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(20,29,48,0.95), rgba(15,23,42,0.88));
-        border: 1px solid rgba(212, 175, 55, 0.25);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        padding: 1rem 1.2rem 0.85rem 1.2rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, rgba(20,29,48,0.95), rgba(15,23,42,0.90));
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.32);
         margin-bottom: 1rem;
     }
 
     .hero-subtitle {
         font-size: 0.95rem;
-        color: #d1d5db;
+        color: #cfd6e4;
         line-height: 1.55;
-        margin-top: 0.35rem;
+        margin-top: 0.4rem;
     }
 
     .section-card {
         padding: 0.95rem 1rem;
         border-radius: 18px;
-        background: rgba(17, 24, 39, 0.82);
+        background: rgba(17, 24, 39, 0.84);
         border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.20);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
         margin-bottom: 0.95rem;
     }
 
-    .small-note {
+    .subtle-text {
         color: #cbd5e1;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+
+    .filter-chip {
+        display: inline-block;
+        padding: 0.36rem 0.62rem;
+        margin: 0 0.35rem 0.35rem 0;
+        border-radius: 999px;
+        background: rgba(212, 175, 55, 0.12);
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        color: #f8e7b0;
+        font-size: 0.80rem;
+        font-weight: 700;
     }
 
     div[data-testid="stMetric"] {
         background: rgba(17, 24, 39, 0.90);
         border: 1px solid rgba(212, 175, 55, 0.18);
-        padding: 0.85rem;
+        padding: 0.82rem;
         border-radius: 16px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.16);
     }
 
     div[data-testid="stMetricLabel"] {
@@ -80,55 +93,23 @@ st.markdown("""
         color: #f8e7b0;
     }
 
-    .match-card-win {
-        padding: 0.72rem 0.82rem;
-        border-radius: 14px;
-        background: rgba(34, 197, 94, 0.28);
-        border: 1px solid rgba(134, 239, 172, 0.68);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.16);
-        color: #ecfdf5;
-        margin-bottom: 0.65rem;
-    }
-
-    .match-card-loss {
-        padding: 0.72rem 0.82rem;
-        border-radius: 14px;
-        background: rgba(239, 68, 68, 0.26);
-        border: 1px solid rgba(252, 165, 165, 0.68);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.16);
-        color: #fef2f2;
-        margin-bottom: 0.65rem;
-    }
-
-    .match-title {
-        font-size: 0.98rem;
-        font-weight: 800;
-        margin-bottom: 0.15rem;
-    }
-
-    .match-line {
-        font-size: 0.84rem;
-        line-height: 1.35;
-        font-weight: 600;
-    }
-
     .pick-card {
-        padding: 0.85rem;
-        border-radius: 16px;
+        padding: 0.9rem;
+        border-radius: 18px;
         background: rgba(17, 24, 39, 0.90);
         border: 1px solid rgba(212, 175, 55, 0.18);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.18);
         text-align: center;
-        min-height: 245px;
+        min-height: 320px;
     }
 
     .pick-label {
-        font-size: 0.84rem;
+        font-size: 0.78rem;
         color: #cbd5e1;
-        margin-bottom: 0.45rem;
-        font-weight: 700;
+        margin-bottom: 0.4rem;
+        font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
     }
 
     .pick-name {
@@ -136,7 +117,43 @@ st.markdown("""
         font-weight: 800;
         color: #f8e7b0;
         margin-top: 0.45rem;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.15rem;
+    }
+
+    .confidence-high {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(134, 239, 172, 0.42);
+        color: #dcfce7;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.45rem;
+    }
+
+    .confidence-medium {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.16);
+        border: 1px solid rgba(147, 197, 253, 0.38);
+        color: #dbeafe;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.45rem;
+    }
+
+    .confidence-low {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.16);
+        border: 1px solid rgba(252, 211, 77, 0.38);
+        color: #fef3c7;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.45rem;
     }
 
     .pick-stat {
@@ -145,26 +162,34 @@ st.markdown("""
         line-height: 1.45;
     }
 
+    .reason-line {
+        font-size: 0.84rem;
+        color: #e5e7eb;
+        line-height: 1.45;
+        text-align: left;
+        margin-top: 0.25rem;
+    }
+
     .tier-card {
-        padding: 0.8rem;
+        padding: 0.82rem;
         border-radius: 16px;
         background: rgba(17, 24, 39, 0.88);
         border: 1px solid rgba(212, 175, 55, 0.15);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-        min-height: 210px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.16);
     }
 
     .tier-header {
         font-size: 1rem;
         font-weight: 800;
-        margin-bottom: 0.55rem;
+        margin-bottom: 0.45rem;
+        color: #f8e7b0;
     }
 
     .tier-chip {
         display: inline-block;
         padding: 0.22rem 0.5rem;
         border-radius: 999px;
-        font-size: 0.76rem;
+        font-size: 0.74rem;
         font-weight: 800;
         margin-bottom: 0.5rem;
         color: #0f172a;
@@ -172,10 +197,42 @@ st.markdown("""
     }
 
     .tier-line {
-        font-size: 0.88rem;
-        line-height: 1.5;
+        font-size: 0.86rem;
+        line-height: 1.45;
         color: #e5e7eb;
         margin-bottom: 0.45rem;
+    }
+
+    .match-card-win {
+        padding: 0.74rem 0.84rem;
+        border-radius: 14px;
+        background: rgba(34, 197, 94, 0.28);
+        border: 1px solid rgba(134, 239, 172, 0.66);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        color: #ecfdf5;
+        margin-bottom: 0.65rem;
+    }
+
+    .match-card-loss {
+        padding: 0.74rem 0.84rem;
+        border-radius: 14px;
+        background: rgba(239, 68, 68, 0.25);
+        border: 1px solid rgba(252, 165, 165, 0.66);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        color: #fef2f2;
+        margin-bottom: 0.65rem;
+    }
+
+    .match-title {
+        font-size: 0.96rem;
+        font-weight: 800;
+        margin-bottom: 0.14rem;
+    }
+
+    .match-line {
+        font-size: 0.83rem;
+        line-height: 1.35;
+        font-weight: 600;
     }
 
     .mastery-card {
@@ -184,7 +241,7 @@ st.markdown("""
         border-radius: 14px;
         background: rgba(17, 24, 39, 0.88);
         border: 1px solid rgba(255,255,255,0.06);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.13);
     }
 
     .mastery-name {
@@ -210,14 +267,14 @@ logo_path = Path("outdraft_logo.png")
 
 st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 if logo_path.exists():
-    c1, c2, c3 = st.columns([1, 2.1, 1])
+    c1, c2, c3 = st.columns([1, 2.0, 1])
     with c2:
         st.image(str(logo_path), use_container_width=True)
 else:
     st.title("Outdraft")
 
 st.markdown(
-    '<div class="hero-subtitle">Player-specific draft analysis built from your own match history. Filter by queue and role, then surface the strongest picks from your pool.</div>',
+    '<div class="hero-subtitle">Built to reduce draft anxiety and surface your smartest picks fast. Outdraft focuses on clarity, confidence, and your actual champion pool.</div>',
     unsafe_allow_html=True
 )
 st.markdown('</div>', unsafe_allow_html=True)
@@ -384,6 +441,55 @@ def build_recommendations(tier_df, ally_picks, enemy_picks, bans):
 
     return recs.sort_values(by="overall_score", ascending=False)
 
+def get_unique_pick(df, score_col, used):
+    if df.empty:
+        return None
+    for _, row in df.sort_values(by=score_col, ascending=False).iterrows():
+        if row["champion"] not in used:
+            used.add(row["champion"])
+            return row
+    return None
+
+def get_confidence_label(row):
+    if row is None:
+        return ("No Data", "confidence-low")
+    games = int(row["games"])
+    wr = float(row["win_rate"])
+    if games >= 12 and wr >= 58:
+        return ("High Confidence", "confidence-high")
+    elif games >= 6 and wr >= 50:
+        return ("Solid Confidence", "confidence-medium")
+    else:
+        return ("Low Sample", "confidence-low")
+
+def generate_pick_reasons(row):
+    if row is None:
+        return []
+
+    reasons = []
+
+    if row["games"] >= 12:
+        reasons.append(f'{int(row["games"])} games in this filter')
+    elif row["games"] >= 6:
+        reasons.append(f'{int(row["games"])} recent games on this champ')
+
+    if row["win_rate"] >= 60:
+        reasons.append(f'{row["win_rate"]}% win rate')
+    elif row["win_rate"] >= 52:
+        reasons.append(f'positive win rate at {row["win_rate"]}%')
+
+    if row["avg_kda"] >= 4:
+        reasons.append(f'{row["avg_kda"]} average KDA')
+    elif row["avg_kda"] >= 3:
+        reasons.append(f'stable {row["avg_kda"]} KDA')
+
+    if row["tier"] == "S":
+        reasons.append("top-tier fit for this context")
+    elif row["tier"] == "A":
+        reasons.append("strong comfort option")
+
+    return reasons[:3]
+
 def fetch_filtered_matches(puuid, selected_match_type, selected_role, desired_count):
     collected_rows = []
     start = 0
@@ -549,7 +655,7 @@ def render_tier_column(df_tiers, tier_label, chip_text):
             f"""
             <div class="tier-line">
                 <strong>{row["champion"]}</strong><br>
-                Score: {row["tier_score"]} • WR: {row["win_rate"]}% • Games: {int(row["games"])} • KDA: {row["avg_kda"]}
+                Score: {row["tier_score"]} • WR: {row["win_rate"]}% • Games: {int(row["games"])}
             </div>
             """,
             unsafe_allow_html=True
@@ -561,8 +667,10 @@ def render_pick_card(label, row, score_col):
     st.markdown(f'<div class="pick-label">{label}</div>', unsafe_allow_html=True)
 
     if row is not None:
+        conf_text, conf_class = get_confidence_label(row)
         st.image(get_champion_square_url(row["champion"]), width=90)
         st.markdown(f'<div class="pick-name">{row["champion"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="{conf_class}">{conf_text}</div>', unsafe_allow_html=True)
         st.markdown(
             f"""
             <div class="pick-stat">
@@ -575,6 +683,10 @@ def render_pick_card(label, row, score_col):
             """,
             unsafe_allow_html=True
         )
+
+        reasons = generate_pick_reasons(row)
+        for reason in reasons:
+            st.markdown(f'<div class="reason-line">• {reason}</div>', unsafe_allow_html=True)
     else:
         st.write("No eligible champion")
 
@@ -642,7 +754,7 @@ analyze_clicked = st.sidebar.button("Analyze Player", use_container_width=True)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    '<div class="small-note">Tip: Ranked Solo + one role gives the cleanest signal. Draft inputs remove unavailable champions from recommendations.</div>',
+    '<div class="subtle-text">Tip: Start with Ranked Solo + one role. Keeping inputs simple makes the recommendations feel clearer and more trustworthy.</div>',
     unsafe_allow_html=True
 )
 
@@ -738,39 +850,31 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
         total_losses = total_games - total_wins
         overall_winrate = round((total_wins / total_games) * 100, 1)
 
-        tabs = st.tabs(["Match History", "Recommendations", "Mastery", "Graphs"])
+        # Applied filters
+        chips = [
+            match_type_filter,
+            role_filter,
+            f"Last {len(filtered_df)} games"
+        ]
+        if ally_picks:
+            chips.append("Ally: " + ", ".join(ally_picks[:3]))
+        if enemy_picks:
+            chips.append("Enemy: " + ", ".join(enemy_picks[:3]))
+        if bans:
+            chips.append("Bans: " + ", ".join(bans[:3]))
+
+        chip_html = "".join([f'<span class="filter-chip">{chip}</span>' for chip in chips])
+        st.markdown(chip_html, unsafe_allow_html=True)
+
+        tabs = st.tabs(["Draft", "Match History", "Mastery", "Graphs"])
 
         with tabs[0]:
-            top_left, top_right = st.columns([1, 2.2], gap="large")
-
-            with top_left:
-                st.subheader("Performance Snapshot")
-                c1, c2 = st.columns(2)
-                c1.metric("Games", total_games)
-                c2.metric("Win Rate", f"{overall_winrate}%")
-
-                c3, c4 = st.columns(2)
-                c3.metric("Wins", total_wins)
-                c4.metric("Losses", total_losses)
-
-                c5, c6 = st.columns(2)
-                c5.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
-                c6.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
-
-                st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
-                st.metric("Solo Rank", format_rank(solo_entry))
-                st.metric("Flex Rank", format_rank(flex_entry))
-
-            with top_right:
-                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
-                render_recent_match_rows(filtered_df)
-
-        with tabs[1]:
             st.subheader("Recommended Picks")
 
-            top_overall = rec_df.iloc[0] if len(rec_df) >= 1 else None
-            top_comfort = rec_df.sort_values(by="comfort_score", ascending=False).iloc[0] if len(rec_df) >= 1 else None
-            top_blind = rec_df.sort_values(by="blind_score", ascending=False).iloc[0] if len(rec_df) >= 1 else None
+            used_champs = set()
+            top_overall = get_unique_pick(rec_df, "overall_score", used_champs)
+            top_comfort = get_unique_pick(rec_df, "comfort_score", used_champs)
+            top_blind = get_unique_pick(rec_df, "blind_score", used_champs)
 
             p1, p2, p3 = st.columns(3)
             with p1:
@@ -780,32 +884,47 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
             with p3:
                 render_pick_card("Best Blind", top_blind, "blind_score")
 
-            shown_any_tier = False
-            tier_cols = st.columns(4)
+            present_tiers = [tier for tier in ["S", "A", "B", "C"] if not tier_df[tier_df["tier"] == tier].empty]
+            if present_tiers:
+                st.subheader("Tier Breakdown")
+                tier_cols = st.columns(len(present_tiers))
+                tier_labels = {
+                    "S": "Best current picks",
+                    "A": "Strong comfort options",
+                    "B": "Playable options",
+                    "C": "Low confidence"
+                }
+                for col, tier in zip(tier_cols, present_tiers):
+                    with col:
+                        render_tier_column(tier_df, tier, tier_labels[tier])
 
-            with tier_cols[0]:
-                if not tier_df[tier_df["tier"] == "S"].empty:
-                    render_tier_column(tier_df, "S", "Best current picks")
-                    shown_any_tier = True
-            with tier_cols[1]:
-                if not tier_df[tier_df["tier"] == "A"].empty:
-                    render_tier_column(tier_df, "A", "Strong comfort options")
-                    shown_any_tier = True
-            with tier_cols[2]:
-                if not tier_df[tier_df["tier"] == "B"].empty:
-                    render_tier_column(tier_df, "B", "Playable options")
-                    shown_any_tier = True
-            with tier_cols[3]:
-                if not tier_df[tier_df["tier"] == "C"].empty:
-                    render_tier_column(tier_df, "C", "Low confidence")
-                    shown_any_tier = True
+        with tabs[1]:
+            left_col, right_col = st.columns([1, 2.2], gap="large")
 
-            if not shown_any_tier:
-                st.info("No recommendation tiers available yet.")
+            with left_col:
+                st.subheader("Performance Snapshot")
+                a, b = st.columns(2)
+                a.metric("Games", total_games)
+                b.metric("Win Rate", f"{overall_winrate}%")
+
+                c, d = st.columns(2)
+                c.metric("Wins", total_wins)
+                d.metric("Losses", total_losses)
+
+                e, f = st.columns(2)
+                e.metric("Avg KDA", round(filtered_df["kda"].mean(), 2))
+                f.metric("Avg CS", round(filtered_df["cs"].mean(), 1))
+
+                st.metric("Avg Damage", int(filtered_df["damage_to_champs"].mean()))
+                st.metric("Solo Rank", format_rank(solo_entry))
+                st.metric("Flex Rank", format_rank(flex_entry))
+
+            with right_col:
+                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
+                render_recent_match_rows(filtered_df)
 
         with tabs[2]:
             st.subheader("Champion Mastery")
-
             render_mastery_strip(champion_summary)
 
             mastery_table = champion_summary.copy()
@@ -861,4 +980,4 @@ if analyze_clicked or "last_loaded_filter_key" in st.session_state:
                     st.pyplot(fig2)
 
 else:
-    st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, and click Analyze Player.")
+    st.info("Use the left sidebar to enter a Riot ID, choose queue and role filters, then click Analyze Player.")
