@@ -9,9 +9,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ----------------------------
-# Page styling
-# ----------------------------
 st.markdown("""
 <style>
     .stApp {
@@ -21,18 +18,15 @@ st.markdown("""
             linear-gradient(180deg, #0b1220 0%, #111827 45%, #0f172a 100%);
         color: #f3f4f6;
     }
-
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
         max-width: 1280px;
     }
-
     h1, h2, h3 {
         color: #f8e7b0;
         letter-spacing: 0.3px;
     }
-
     .hero-card {
         padding: 1.25rem 1.5rem;
         border-radius: 20px;
@@ -41,20 +35,17 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
         margin-bottom: 1rem;
     }
-
     .hero-title {
         font-size: 2rem;
         font-weight: 800;
         margin-bottom: 0.25rem;
         color: #f8e7b0;
     }
-
     .hero-subtitle {
         font-size: 0.98rem;
         color: #d1d5db;
         line-height: 1.55;
     }
-
     .section-card {
         padding: 0.95rem 1rem;
         border-radius: 18px;
@@ -63,12 +54,10 @@ st.markdown("""
         box-shadow: 0 8px 24px rgba(0,0,0,0.20);
         margin-bottom: 0.95rem;
     }
-
     .small-note {
         color: #cbd5e1;
         font-size: 0.9rem;
     }
-
     div[data-testid="stMetric"] {
         background: rgba(17, 24, 39, 0.86);
         border: 1px solid rgba(212, 175, 55, 0.18);
@@ -76,15 +65,12 @@ st.markdown("""
         border-radius: 16px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
-
     div[data-testid="stMetricLabel"] {
         color: #d1d5db;
     }
-
     div[data-testid="stMetricValue"] {
         color: #f8e7b0;
     }
-
     .match-card-win {
         padding: 0.65rem 0.8rem;
         border-radius: 14px;
@@ -94,7 +80,6 @@ st.markdown("""
         color: #dcfce7;
         margin-bottom: 0.65rem;
     }
-
     .match-card-loss {
         padding: 0.65rem 0.8rem;
         border-radius: 14px;
@@ -104,19 +89,16 @@ st.markdown("""
         color: #fee2e2;
         margin-bottom: 0.65rem;
     }
-
     .match-title {
         font-size: 0.98rem;
         font-weight: 800;
         margin-bottom: 0.2rem;
     }
-
     .match-line {
         font-size: 0.84rem;
         line-height: 1.35;
         font-weight: 600;
     }
-
     .tier-card {
         padding: 0.85rem;
         border-radius: 16px;
@@ -125,13 +107,11 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(0,0,0,0.18);
         min-height: 240px;
     }
-
     .tier-header {
         font-size: 1.1rem;
         font-weight: 800;
         margin-bottom: 0.65rem;
     }
-
     .tier-chip {
         display: inline-block;
         padding: 0.25rem 0.55rem;
@@ -142,14 +122,12 @@ st.markdown("""
         color: #0f172a;
         background: #f8e7b0;
     }
-
     .tier-line {
         font-size: 0.9rem;
         line-height: 1.55;
         color: #e5e7eb;
         margin-bottom: 0.5rem;
     }
-
     .mastery-card {
         text-align: center;
         padding: 0.55rem;
@@ -158,7 +136,6 @@ st.markdown("""
         border: 1px solid rgba(255,255,255,0.06);
         box-shadow: 0 6px 14px rgba(0,0,0,0.14);
     }
-
     .mastery-name {
         font-size: 0.82rem;
         font-weight: 700;
@@ -166,13 +143,11 @@ st.markdown("""
         margin-top: 0.3rem;
         margin-bottom: 0.15rem;
     }
-
     .mastery-stat {
         font-size: 0.72rem;
         color: #cbd5e1;
         line-height: 1.35;
     }
-
     .context-note {
         font-size: 0.82rem;
         color: #cbd5e1;
@@ -194,16 +169,12 @@ st.markdown("""
 api_key = st.secrets["RIOT_API_KEY"]
 headers = {"X-Riot-Token": api_key}
 
-# ----------------------------
-# Helper functions
-# ----------------------------
 @st.cache_data(show_spinner=False)
 def get_latest_ddragon_version():
     url = "https://ddragon.leagueoflegends.com/api/versions.json"
     response = requests.get(url, timeout=10)
     response.raise_for_status()
     return response.json()[0]
-
 
 def classify_match_type(queue_id, game_mode):
     if queue_id == 420:
@@ -217,7 +188,6 @@ def classify_match_type(queue_id, game_mode):
     else:
         return "Other"
 
-
 def normalize_role(role_value):
     if not role_value:
         return "UNKNOWN"
@@ -225,7 +195,6 @@ def normalize_role(role_value):
     if role_value in ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]:
         return role_value
     return "UNKNOWN"
-
 
 def display_role_name(role_value):
     role_map = {
@@ -237,7 +206,6 @@ def display_role_name(role_value):
         "UNKNOWN": "Unknown"
     }
     return role_map.get(role_value, role_value)
-
 
 def champion_to_ddragon_name(champion_name):
     special_map = {
@@ -268,12 +236,10 @@ def champion_to_ddragon_name(champion_name):
     }
     return special_map.get(champion_name, champion_name)
 
-
 def get_champion_square_url(champion_name):
     version = get_latest_ddragon_version()
     champ = champion_to_ddragon_name(champion_name)
     return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champ}.png"
-
 
 def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     fig, ax = plt.subplots(figsize=(8.5, 4.4))
@@ -309,19 +275,10 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     plt.tight_layout()
     return fig
 
-
 def rank_tuple(tier_str, rank_str, lp):
     tier_order = {
-        "IRON": 1,
-        "BRONZE": 2,
-        "SILVER": 3,
-        "GOLD": 4,
-        "PLATINUM": 5,
-        "EMERALD": 6,
-        "DIAMOND": 7,
-        "MASTER": 8,
-        "GRANDMASTER": 9,
-        "CHALLENGER": 10,
+        "IRON": 1, "BRONZE": 2, "SILVER": 3, "GOLD": 4, "PLATINUM": 5,
+        "EMERALD": 6, "DIAMOND": 7, "MASTER": 8, "GRANDMASTER": 9, "CHALLENGER": 10
     }
     rank_order = {"IV": 1, "III": 2, "II": 3, "I": 4}
     return (
@@ -330,12 +287,10 @@ def rank_tuple(tier_str, rank_str, lp):
         lp or 0
     )
 
-
 def format_rank(entry):
     if not entry:
-        return "Unranked"
+        return "Unavailable"
     return f'{entry.get("tier", "")} {entry.get("rank", "")} • {entry.get("leaguePoints", 0)} LP'
-
 
 def compute_recent_form(filtered_df, champion_name):
     champ_games = filtered_df[filtered_df["champion"] == champion_name].copy()
@@ -346,13 +301,11 @@ def compute_recent_form(filtered_df, champion_name):
     recent_kda = champ_games["kda"].mean()
     return (recent_wr * 0.7) + (min(recent_kda, 8) / 8 * 30)
 
-
 def build_tiers(champion_summary, filtered_df):
     if champion_summary.empty:
         return champion_summary
 
     working = champion_summary.copy()
-
     max_games = working["games"].max() if working["games"].max() > 0 else 1
     max_kda = working["avg_kda"].max() if working["avg_kda"].max() > 0 else 1
 
@@ -384,7 +337,6 @@ def build_tiers(champion_summary, filtered_df):
 
     working["tier"] = working["tier_score"].apply(score_to_tier)
     return working.sort_values(by=["tier_score", "games"], ascending=[False, False])
-
 
 def render_recent_match_rows(filtered_df):
     records = filtered_df.sort_values(by="match_id", ascending=False).to_dict("records")
@@ -439,7 +391,6 @@ def render_recent_match_rows(filtered_df):
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-
 def render_mastery_strip(champion_summary_df):
     top7 = champion_summary_df.sort_values(by=["games", "win_rate"], ascending=[False, False]).head(7).to_dict("records")
     cols = st.columns(7)
@@ -459,7 +410,6 @@ def render_mastery_strip(champion_summary_df):
                 unsafe_allow_html=True
             )
             st.markdown('</div>', unsafe_allow_html=True)
-
 
 def render_tier_column(df_tiers, tier_label, chip_text):
     st.markdown('<div class="tier-card">', unsafe_allow_html=True)
@@ -482,9 +432,6 @@ def render_tier_column(df_tiers, tier_label, chip_text):
             )
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------------------
-# Sidebar
-# ----------------------------
 st.sidebar.header("Player & Filter Controls")
 
 game_name = st.sidebar.text_input("Riot ID name", "HE TAKE ME")
@@ -509,12 +456,8 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------------------
-# Main
-# ----------------------------
 if analyze_clicked:
     with st.spinner("Pulling Riot data and building your profile..."):
-        # Riot ID -> PUUID
         account_url = f"https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
         account_response = requests.get(account_url, headers=headers, timeout=20)
 
@@ -526,33 +469,31 @@ if analyze_clicked:
                 st.write(account_response.text)
             st.stop()
 
-        account_data = account_response.json()
-        puuid = account_data["puuid"]
+        puuid = account_response.json()["puuid"]
 
-        # PUUID -> summoner info
+        # These platform endpoints can fail or return non-player payloads; handle safely.
+        solo_entry = None
+        flex_entry = None
+        rank_context_available = False
+
         summoner_url = f"https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
         summoner_response = requests.get(summoner_url, headers=headers, timeout=20)
 
-        if summoner_response.status_code != 200:
-            st.error(f"Summoner lookup failed. Status code: {summoner_response.status_code}")
-            try:
-                st.json(summoner_response.json())
-            except Exception:
-                st.write(summoner_response.text)
-            st.stop()
+        if summoner_response.status_code == 200:
+            summoner_data = summoner_response.json()
+            summoner_id = summoner_data.get("id")
 
-        summoner_data = summoner_response.json()
-        summoner_id = summoner_data["id"]
+            if summoner_id:
+                league_url = f"https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}"
+                league_response = requests.get(league_url, headers=headers, timeout=20)
 
-        # Current ranked entries
-        league_url = f"https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}"
-        league_response = requests.get(league_url, headers=headers, timeout=20)
-        league_entries = league_response.json() if league_response.status_code == 200 else []
+                if league_response.status_code == 200:
+                    league_entries = league_response.json()
+                    if isinstance(league_entries, list):
+                        solo_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_SOLO_5x5"), None)
+                        flex_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"), None)
+                        rank_context_available = True
 
-        solo_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_SOLO_5x5"), None)
-        flex_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"), None)
-
-        # PUUID -> match ids
         matches_url = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count={match_count}"
         matches_response = requests.get(matches_url, headers=headers, timeout=20)
 
@@ -620,7 +561,6 @@ if analyze_clicked:
             st.stop()
 
         df = pd.DataFrame(rows)
-
         filtered_df = df.copy()
 
         if match_type_filter != "All":
@@ -670,7 +610,6 @@ if analyze_clicked:
         total_losses = total_games - total_wins
         overall_winrate = round((total_wins / total_games) * 100, 1)
 
-        # Layout order: snapshot -> recent matches -> tiers -> charts -> summaries -> mastery
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.subheader("Performance Snapshot")
 
@@ -713,20 +652,11 @@ if analyze_clicked:
         with mc2:
             st.metric("Current Flex Queue Rank", format_rank(flex_entry))
 
-        if match_type_filter == "Ranked Solo":
-            selected_rank = solo_entry
-            selected_label = "Ranked Solo"
-        elif match_type_filter == "Ranked Flex":
-            selected_rank = flex_entry
-            selected_label = "Ranked Flex"
+        if rank_context_available:
+            st.write("Rank context loaded successfully.")
         else:
-            # choose stronger of the two current ranks as a rough general context summary
-            selected_rank = solo_entry
-            if rank_tuple(*(flex_entry.get("tier"), flex_entry.get("rank"), flex_entry.get("leaguePoints"))) > rank_tuple(*(solo_entry.get("tier"), solo_entry.get("rank"), solo_entry.get("leaguePoints"))) if (solo_entry and flex_entry) else False:
-                selected_rank = flex_entry
-            selected_label = "Selected context"
+            st.write("Rank context unavailable for this player or this request.")
 
-        st.write(f"Queue context used: **{selected_label}**")
         st.markdown(
             '<div class="context-note">This section uses current ranked queue data as a context proxy. It is intentionally not labeled as MMR, and duo/premade effects should be treated as unobserved context rather than a measured input.</div>',
             unsafe_allow_html=True
