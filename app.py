@@ -109,34 +109,34 @@ st.markdown("""
     }
 
     .match-card-win {
-        padding: 0.9rem;
-        border-radius: 18px;
-        background: rgba(220, 252, 231, 0.92);
-        border: 1px solid rgba(34, 197, 94, 0.35);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-        color: #052e16;
-        margin-bottom: 1rem;
+        padding: 0.65rem 0.8rem;
+        border-radius: 14px;
+        background: rgba(220, 252, 231, 0.18);
+        border: 1px solid rgba(134, 239, 172, 0.35);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+        color: #dcfce7;
+        margin-bottom: 0.65rem;
     }
 
     .match-card-loss {
-        padding: 0.9rem;
-        border-radius: 18px;
-        background: rgba(254, 226, 226, 0.92);
-        border: 1px solid rgba(239, 68, 68, 0.35);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-        color: #450a0a;
-        margin-bottom: 1rem;
+        padding: 0.65rem 0.8rem;
+        border-radius: 14px;
+        background: rgba(254, 226, 226, 0.16);
+        border: 1px solid rgba(252, 165, 165, 0.35);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+        color: #fee2e2;
+        margin-bottom: 0.65rem;
     }
 
     .match-title {
-        font-size: 1rem;
+        font-size: 0.98rem;
         font-weight: 800;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.2rem;
     }
 
     .match-line {
-        font-size: 0.92rem;
-        line-height: 1.5;
+        font-size: 0.84rem;
+        line-height: 1.35;
         font-weight: 600;
     }
 </style>
@@ -146,7 +146,7 @@ st.markdown("""
 <div class="hero-card">
     <div class="hero-title">LoL Draft & Player Analyzer</div>
     <div class="hero-subtitle">
-        Arcane-inspired mood, cleaner visuals, champion splash art, and real Riot API match analysis.
+        Arcane-inspired mood, cleaner visuals, compact champion art, and real Riot API match analysis.
         Filter by match type and role, review champion trends, and build toward a smarter draft recommendation tool.
     </div>
 </div>
@@ -157,6 +157,7 @@ st.markdown("""
 # ----------------------------
 api_key = st.secrets["RIOT_API_KEY"]
 headers = {"X-Riot-Token": api_key}
+
 
 # ----------------------------
 # Helper functions
@@ -169,6 +170,7 @@ def get_latest_ddragon_version():
     versions = response.json()
     return versions[0]
 
+
 def classify_match_type(queue_id, game_mode):
     if queue_id in [420, 440]:
         return "Ranked"
@@ -179,6 +181,7 @@ def classify_match_type(queue_id, game_mode):
     else:
         return "Other"
 
+
 def normalize_role(role_value):
     if not role_value:
         return "UNKNOWN"
@@ -186,6 +189,7 @@ def normalize_role(role_value):
     if role_value in ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]:
         return role_value
     return "UNKNOWN"
+
 
 def display_role_name(role_value):
     role_map = {
@@ -197,6 +201,7 @@ def display_role_name(role_value):
         "UNKNOWN": "Unknown"
     }
     return role_map.get(role_value, role_value)
+
 
 def champion_to_ddragon_name(champion_name):
     special_map = {
@@ -216,13 +221,31 @@ def champion_to_ddragon_name(champion_name):
         "TwistedFate": "TwistedFate",
         "MasterYi": "MasterYi",
         "DrMundo": "DrMundo",
+        "Nunu": "Nunu",
+        "Renata": "Renata",
+        "Tahm Kench": "TahmKench",
+        "LeBlanc": "Leblanc",
+        "Cho'Gath": "Chogath",
+        "Kai'Sa": "Kaisa",
+        "K'Sante": "KSante",
+        "Vel'Koz": "Velkoz",
+        "Bel'Veth": "Belveth",
+        "Rek'Sai": "RekSai",
+        "Kha'Zix": "Khazix",
     }
     return special_map.get(champion_name, champion_name)
 
+
 def get_champion_splash_url(champion_name):
-    version = get_latest_ddragon_version()
     champ = champion_to_ddragon_name(champion_name)
     return f"https://ddragon.leagueoflegends.com/cdn/img/champion/loading/{champ}_0.jpg"
+
+
+def get_champion_square_url(champion_name):
+    version = get_latest_ddragon_version()
+    champ = champion_to_ddragon_name(champion_name)
+    return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champ}.png"
+
 
 def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     fig, ax = plt.subplots(figsize=(9, 4.8))
@@ -259,11 +282,14 @@ def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
     plt.tight_layout()
     return fig
 
+
 def render_champion_cards(champion_summary_df):
-    cards = champion_summary_df.sort_values(by=["games", "win_rate"], ascending=[False, False]).head(8).to_dict("records")
+    cards = champion_summary_df.sort_values(
+        by=["games", "win_rate"], ascending=[False, False]
+    ).head(8).to_dict("records")
 
     for i in range(0, len(cards), 4):
-        row_cards = cards[i:i+4]
+        row_cards = cards[i:i + 4]
         cols = st.columns(4)
         for col, card in zip(cols, row_cards):
             with col:
@@ -272,7 +298,7 @@ def render_champion_cards(champion_summary_df):
                 st.image(splash_url, use_container_width=True)
                 st.markdown(f'<div class="champ-name">{card["champion"]}</div>', unsafe_allow_html=True)
                 st.markdown(
-                    f'''
+                    f"""
                     <div class="champ-stat">
                         Games: {int(card["games"])}<br>
                         Win Rate: {card["win_rate"]}%<br>
@@ -280,38 +306,66 @@ def render_champion_cards(champion_summary_df):
                         Avg CS: {card["avg_cs"]}<br>
                         Avg Damage: {int(card["avg_damage"])}
                     </div>
-                    ''',
+                    """,
                     unsafe_allow_html=True
                 )
                 st.markdown('</div>', unsafe_allow_html=True)
 
-def render_recent_match_cards(filtered_df):
+
+def render_recent_match_rows(filtered_df):
     records = filtered_df.sort_values(by="match_id", ascending=False).to_dict("records")
 
-    for i in range(0, len(records), 2):
-        row_matches = records[i:i+2]
-        cols = st.columns(2)
+    for match in records:
+        icon_url = get_champion_square_url(match["champion"])
+        card_class = "match-card-win" if match["win"] else "match-card-loss"
+        result_text = "WIN" if match["win"] else "LOSS"
 
-        for col, match in zip(cols, row_matches):
-            with col:
-                splash_url = get_champion_splash_url(match["champion"])
-                card_class = "match-card-win" if match["win"] else "match-card-loss"
-                result_text = "WIN" if match["win"] else "LOSS"
+        st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
 
-                st.image(splash_url, use_container_width=True)
-                st.markdown(
-                    f'''
-                    <div class="{card_class}">
-                        <div class="match-title">{match["champion"]} • {result_text}</div>
-                        <div class="match-line">Role: {match["role"]} | Type: {match["match_type"]}</div>
-                        <div class="match-line">K / D / A: {match["kills"]} / {match["deaths"]} / {match["assists"]}</div>
-                        <div class="match-line">KDA: {match["kda"]} | CS: {match["cs"]} | Vision: {match["vision_score"]}</div>
-                        <div class="match-line">Damage: {int(match["damage_to_champs"])} | Duration: {match["game_duration_min"]} min</div>
-                        <div class="match-line">Match ID: {match["match_id"]}</div>
-                    </div>
-                    ''',
-                    unsafe_allow_html=True
-                )
+        col1, col2, col3, col4, col5 = st.columns([0.8, 2.2, 1.2, 1.4, 1.8])
+
+        with col1:
+            st.image(icon_url, width=52)
+
+        with col2:
+            st.markdown(
+                f"""
+                <div class="match-title" style="margin-bottom: 0.1rem;">{match["champion"]}</div>
+                <div class="match-line">{match["role"]} • {match["match_type"]}</div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col3:
+            st.markdown(
+                f"""
+                <div class="match-title" style="font-size: 0.95rem;">{result_text}</div>
+                <div class="match-line">{match["game_duration_min"]} min</div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col4:
+            st.markdown(
+                f"""
+                <div class="match-line">K / D / A</div>
+                <div class="match-title" style="font-size: 0.95rem;">{match["kills"]} / {match["deaths"]} / {match["assists"]}</div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col5:
+            st.markdown(
+                f"""
+                <div class="match-line">KDA: {match["kda"]}</div>
+                <div class="match-line">CS: {match["cs"]} • Vision: {match["vision_score"]}</div>
+                <div class="match-line">Dmg: {int(match["damage_to_champs"])}</div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ----------------------------
 # Sidebar controls
@@ -530,21 +584,21 @@ if analyze_clicked:
         tab1, tab2, tab3 = st.tabs(["Recent Matches", "Champion Summary", "Role Summary"])
 
         with tab1:
-            render_recent_match_cards(filtered_df)
+            render_recent_match_rows(filtered_df)
 
         with tab2:
             champion_display = champion_summary.copy()
-            champion_display["champion_art"] = champion_display["champion"].apply(get_champion_splash_url)
-            champion_display = champion_display[[
-                "champion_art", "champion", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"
-            ]]
+            champion_display["champion_art"] = champion_display["champion"].apply(get_champion_square_url)
+            champion_display = champion_display[
+                ["champion_art", "champion", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs", "avg_damage"]
+            ]
             st.dataframe(
                 champion_display,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "champion_art": st.column_config.ImageColumn("Splash Art", width="medium"),
-                    "champion": "Champion",
+                    "champion_art": st.column_config.ImageColumn("Champion", width="small"),
+                    "champion": "Name",
                     "games": "Games",
                     "wins": "Wins",
                     "losses": "Losses",
