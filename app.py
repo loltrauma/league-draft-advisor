@@ -1,9 +1,9 @@
 import streamlit as st
 import requests
 import pandas as pd
+import matplotlib.pyplot as plt
 from pathlib import Path
-import time
-from typing import Optional, Dict, Any
+from collections import Counter
 
 st.set_page_config(
     page_title="Outdraft",
@@ -17,7 +17,10 @@ st.set_page_config(
 st.markdown("""
 <style>
     .stApp {
-        background: linear-gradient(180deg, #0b1220 0%, #111827 45%, #0f172a 100%);
+        background:
+            radial-gradient(circle at top left, rgba(196,164,92,0.10), transparent 30%),
+            radial-gradient(circle at top right, rgba(104,127,160,0.12), transparent 25%),
+            linear-gradient(180deg, #0b1220 0%, #111827 45%, #0f172a 100%);
         color: #f3f4f6;
     }
     .block-container {
@@ -25,44 +28,248 @@ st.markdown("""
         padding-bottom: 2rem;
         max-width: 1320px;
     }
-    .hero-card {
-        background: rgba(17, 24, 39, 0.72);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 20px;
-        padding: 1.25rem 1.25rem 1rem 1.25rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    h1, h2, h3 {
+        color: #f8e7b0;
+        letter-spacing: 0.2px;
     }
-    .hero-subtitle {
-        text-align: center;
-        color: #cbd5e1;
-        font-size: 1rem;
-        margin-top: 0.35rem;
+    .hero-card {
+        padding: 1rem 1.2rem 1rem 1.2rem;
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at center top, rgba(212,175,55,0.10), transparent 35%),
+            linear-gradient(135deg, rgba(20,29,48,0.97), rgba(15,23,42,0.93));
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        box-shadow:
+            0 14px 36px rgba(0,0,0,0.36),
+            inset 0 1px 0 rgba(255,255,255,0.03);
         margin-bottom: 1rem;
     }
     .logo-backdrop {
-        background: radial-gradient(circle at center, rgba(59,130,246,0.18), rgba(255,255,255,0.02) 60%, transparent 72%);
-        border-radius: 22px;
-        padding: 0.8rem;
+        padding: 0.75rem 1rem;
+        border-radius: 20px;
+        background:
+            radial-gradient(circle at center, rgba(212,175,55,0.14), transparent 45%),
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+        border: 1px solid rgba(212, 175, 55, 0.14);
     }
-    .metric-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.08);
+    .hero-subtitle {
+        font-size: 0.95rem;
+        color: #cfd6e4;
+        line-height: 1.55;
+        margin-top: 0.55rem;
+        margin-bottom: 0.9rem;
+        text-align: center;
+    }
+    .section-card {
+        padding: 0.95rem 1rem;
+        border-radius: 18px;
+        background: rgba(17, 24, 39, 0.84);
+        border: 1px solid rgba(255,255,255,0.06);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        margin-bottom: 0.95rem;
+    }
+    .subtle-text {
+        color: #cbd5e1;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+    .filter-chip {
+        display: inline-block;
+        padding: 0.36rem 0.62rem;
+        margin: 0 0.35rem 0.35rem 0;
+        border-radius: 999px;
+        background: rgba(212, 175, 55, 0.12);
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        color: #f8e7b0;
+        font-size: 0.80rem;
+        font-weight: 700;
+    }
+    .compact-reco-card {
+        padding: 0.85rem;
         border-radius: 16px;
-        padding: 0.8rem;
+        background: rgba(17, 24, 39, 0.90);
+        border: 1px solid rgba(212, 175, 55, 0.18);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+        text-align: center;
+        margin-bottom: 0.7rem;
+        min-height: 235px;
+    }
+    .compact-reco-label {
+        font-size: 0.76rem;
+        color: #cbd5e1;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+    .compact-reco-name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #f8e7b0;
+        margin-top: 0.35rem;
+        margin-bottom: 0.18rem;
+    }
+    .compact-reco-stat {
+        font-size: 0.83rem;
+        color: #d1d5db;
+        line-height: 1.45;
+    }
+    .reason-line {
+        font-size: 0.82rem;
+        color: #e5e7eb;
+        line-height: 1.4;
+        text-align: left;
+        margin-top: 0.2rem;
+    }
+    .confidence-high {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(134, 239, 172, 0.42);
+        color: #dcfce7;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+    }
+    .confidence-medium {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.16);
+        border: 1px solid rgba(147, 197, 253, 0.38);
+        color: #dbeafe;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+    }
+    .confidence-low {
+        display: inline-block;
+        padding: 0.20rem 0.50rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.16);
+        border: 1px solid rgba(252, 211, 77, 0.38);
+        color: #fef3c7;
+        font-size: 0.75rem;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+    }
+    .tier-card {
+        padding: 0.82rem;
+        border-radius: 16px;
+        background: rgba(17, 24, 39, 0.88);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+    }
+    .tier-header {
+        font-size: 1rem;
+        font-weight: 800;
+        margin-bottom: 0.45rem;
+        color: #f8e7b0;
+    }
+    .tier-chip {
+        display: inline-block;
+        padding: 0.22rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: #0f172a;
+        background: #f8e7b0;
+    }
+    .tier-line {
+        font-size: 0.86rem;
+        line-height: 1.45;
+        color: #e5e7eb;
+        margin-bottom: 0.45rem;
+    }
+    .match-card-win {
+        padding: 0.74rem 0.84rem;
+        border-radius: 14px;
+        background: rgba(34, 197, 94, 0.25);
+        border: 1px solid rgba(134, 239, 172, 0.70);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        color: #ecfdf5;
+        margin-bottom: 0.65rem;
+    }
+    .match-card-loss {
+        padding: 0.74rem 0.84rem;
+        border-radius: 14px;
+        background: rgba(239, 68, 68, 0.22);
+        border: 1px solid rgba(252, 165, 165, 0.70);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        color: #fef2f2;
+        margin-bottom: 0.65rem;
+    }
+    .match-title {
+        font-size: 0.96rem;
+        font-weight: 800;
+        margin-bottom: 0.14rem;
+    }
+    .match-line {
+        font-size: 0.83rem;
+        line-height: 1.35;
+        font-weight: 600;
+    }
+    .mastery-card {
+        text-align: center;
+        padding: 0.55rem;
+        border-radius: 14px;
+        background: rgba(17, 24, 39, 0.88);
+        border: 1px solid rgba(255,255,255,0.06);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.13);
+    }
+    .mastery-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #f8e7b0;
+        margin-top: 0.3rem;
+        margin-bottom: 0.15rem;
+    }
+    .mastery-stat {
+        font-size: 0.72rem;
+        color: #cbd5e1;
+        line-height: 1.35;
+    }
+    .build-card {
+        padding: 0.85rem;
+        border-radius: 16px;
+        background: rgba(17, 24, 39, 0.88);
+        border: 1px solid rgba(255,255,255,0.06);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+        text-align: center;
+    }
+    .build-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #f8e7b0;
+        margin-bottom: 0.5rem;
+    }
+    div[data-testid="stMetric"] {
+        background: rgba(17, 24, 39, 0.90);
+        border: 1px solid rgba(212, 175, 55, 0.18);
+        padding: 0.82rem;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #d1d5db;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #f8e7b0;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ----------------------------
-# Core config
+# Core config / Riot auth
 # ----------------------------
-@st.cache_data(ttl=3600)
-def get_headers():
-    return {"X-Riot-Token": st.secrets["RIOT_API_KEY"]}
+api_key = st.secrets["RIOT_API_KEY"]
+headers = {"X-Riot-Token": api_key}
 
-headers = get_headers()
-
+# ----------------------------
+# Region routing
+# ----------------------------
 PLATFORM_OPTIONS = {
     "NA": "na1",
     "EUW": "euw1",
@@ -77,362 +284,25 @@ PLATFORM_OPTIONS = {
     "RU": "ru"
 }
 
-PLATFORM_TO_REGIONAL = {
-    "na1": "americas",
-    "br1": "americas",
-    "la1": "americas",
-    "la2": "americas",
-    "euw1": "europe",
-    "eun1": "europe",
-    "tr1": "europe",
-    "ru": "europe",
-    "kr": "asia",
-    "jp1": "asia",
-    "oc1": "sea"
-}
-
-# ----------------------------
-# Cached DDragon
-# ----------------------------
-@st.cache_data(ttl=3600, show_spinner=False)
-def get_ddragon_data():
-    response = requests.get("https://ddragon.leagueoflegends.com/api/versions.json", timeout=10)
-    response.raise_for_status()
-    version = response.json()[0]
-
-    item_url = f"https://ddragon.leagueoflegends.com/cdn/{version}/data/en_US/item.json"
-    item_response = requests.get(item_url, timeout=10)
-    item_response.raise_for_status()
-
-    return {
-        "version": version,
-        "items": item_response.json().get("data", {})
-    }
-
-ddragon_data = get_ddragon_data()
-
-def champion_to_ddragon_name(champion_name: str) -> str:
-    mapping = {
-        "FiddleSticks": "Fiddlesticks",
-        "MonkeyKing": "MonkeyKing",
-        "KogMaw": "KogMaw",
-        "KhaZix": "Khazix",
-        "RekSai": "RekSai",
-        "Belveth": "Belveth"
-    }
-    return mapping.get(champion_name, champion_name)
-
-def get_champion_square_url(champion_name: str) -> str:
-    champ = champion_to_ddragon_name(champion_name)
-    return f"https://ddragon.leagueoflegends.com/cdn/{ddragon_data['version']}/img/champion/{champ}.png"
-
-def get_item_icon_url(item_id: int) -> str:
-    return f"https://ddragon.leagueoflegends.com/cdn/{ddragon_data['version']}/img/item/{item_id}.png"
-
-def get_item_data():
-    return ddragon_data["items"]
-
-# ----------------------------
-# Utility functions
-# ----------------------------
-def split_riot_id(full_input: str) -> tuple[str, str]:
-    full_input = full_input.strip()
-    if "#" in full_input:
-        name, tag = full_input.split("#", 1)
-        return name.strip(), tag.strip()
-    return full_input, ""
-
-def parse_csv_text(text: str) -> list[str]:
-    return [x.strip() for x in text.split(",") if x.strip()]
-
-def classify_match_type(queue_id: int, game_mode: str) -> str:
-    if queue_id == 420:
-        return "Ranked Solo"
-    if queue_id == 440:
-        return "Ranked Flex"
-    if queue_id == 450 or game_mode == "ARAM":
-        return "ARAM"
-    if queue_id in [400, 430]:
-        return "Normals"
-    return "Other"
-
-def normalize_role(role_value: str) -> str:
-    if not role_value:
-        return "UNKNOWN"
-    role_value = role_value.upper()
-    valid_roles = {"TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"}
-    return role_value if role_value in valid_roles else "UNKNOWN"
-
-def display_role_name(role_value: str) -> str:
-    return {
-        "TOP": "Top",
-        "JUNGLE": "Jungle",
-        "MIDDLE": "Mid",
-        "BOTTOM": "ADC",
-        "UTILITY": "Support",
-        "UNKNOWN": "Unknown"
-    }.get(role_value, role_value)
-
-def format_rank(entry: Optional[Dict[str, Any]]) -> str:
-    if not entry:
-        return "Unavailable"
-    return f'{entry.get("tier", "")} {entry.get("rank", "")} • {entry.get("leaguePoints", 0)} LP'
-
-# ----------------------------
-# Riot API helper with 429 retry/backoff
-# ----------------------------
-def riot_api_get(url: str, timeout: int = 20, max_retries: int = 3):
-    for attempt in range(max_retries + 1):
-        response = requests.get(url, headers=headers, timeout=timeout)
-
-        if response.status_code == 429:
-            retry_after = response.headers.get("Retry-After")
-            wait_seconds = float(retry_after) if retry_after else min(2 ** attempt, 8)
-            if attempt < max_retries:
-                time.sleep(wait_seconds)
-                continue
-            raise requests.exceptions.RequestException(
-                f"Rate limited by Riot API (429). Retry after {wait_seconds} seconds."
-            )
-
-        if response.status_code >= 400:
-            raise requests.exceptions.RequestException(
-                f"Riot API error {response.status_code}: {url}"
-            )
-
-        return response
-
-    raise requests.exceptions.RequestException("Riot API request failed after retries.")
-
-# ----------------------------
-# Riot account lookup
-# ----------------------------
-@st.cache_data(ttl=300, show_spinner=False)
-def fetch_account_by_riot_id(game_name: str, tag_line: str, regional_region: str) -> dict:
-    url = (
-        f"https://{regional_region}.api.riotgames.com/riot/account/v1/accounts/"
-        f"by-riot-id/{game_name}/{tag_line}"
-    )
-    return riot_api_get(url).json()
-
-@st.cache_data(ttl=300, show_spinner=False)
-def fetch_summoner_and_league(puuid: str, platform_region: str):
-    summoner_url = (
-        f"https://{platform_region}.api.riotgames.com/lol/summoner/v4/"
-        f"summoners/by-puuid/{puuid}"
-    )
-    summoner_data = riot_api_get(summoner_url).json()
-
-    solo_entry = None
-    flex_entry = None
-
-    summoner_id = summoner_data.get("id")
-    if summoner_id:
-        league_url = (
-            f"https://{platform_region}.api.riotgames.com/lol/league/v4/"
-            f"entries/by-summoner/{summoner_id}"
-        )
-        league_entries = riot_api_get(league_url).json()
-
-        if isinstance(league_entries, list):
-            solo_entry = next(
-                (e for e in league_entries if e.get("queueType") == "RANKED_SOLO_5x5"),
-                None
-            )
-            flex_entry = next(
-                (e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"),
-                None
-            )
-
-    return summoner_data, solo_entry, flex_entry
-
-# ----------------------------
-# Fetch raw matches once, filter locally
-# ----------------------------
-@st.cache_data(ttl=300, show_spinner=False)
-def fetch_raw_matches(
-    puuid: str,
-    platform_region: str,
-    regional_region: str,
-    count: int
-):
-    _, solo_entry, flex_entry = fetch_summoner_and_league(puuid, platform_region)
-
-    collected_rows = []
-    start = 0
-    chunk_size = 20
-    max_scan = 100
-
-    while len(collected_rows) < count and start < max_scan:
-        ids_url = (
-            f"https://{regional_region}.api.riotgames.com/lol/match/v5/matches/"
-            f"by-puuid/{puuid}/ids?start={start}&count={chunk_size}"
-        )
-        match_ids = riot_api_get(ids_url).json()
-
-        if not match_ids:
-            break
-
-        for match_id in match_ids:
-            if len(collected_rows) >= count:
-                break
-
-            match_url = (
-                f"https://{regional_region}.api.riotgames.com/lol/match/v5/matches/{match_id}"
-            )
-
-            try:
-                match_data = riot_api_get(match_url).json()
-                info = match_data.get("info", {})
-                participants = info.get("participants", [])
-
-                player_data = next((p for p in participants if p.get("puuid") == puuid), None)
-                if not player_data:
-                    continue
-
-                queue_id = info.get("queueId", -1)
-                game_mode = info.get("gameMode", "Unknown")
-                match_type_check = classify_match_type(queue_id, game_mode)
-
-                role_raw = normalize_role(player_data.get("teamPosition", "UNKNOWN"))
-                role_display = display_role_name(role_raw)
-
-                kills = int(player_data.get("kills", 0))
-                deaths = int(player_data.get("deaths", 0))
-                assists = int(player_data.get("assists", 0))
-                cs_total = int(player_data.get("totalMinionsKilled", 0)) + int(
-                    player_data.get("neutralMinionsKilled", 0)
-                )
-                duration_seconds = int(info.get("gameDuration", 0))
-                duration_min = round(duration_seconds / 60, 1) if duration_seconds > 0 else 0.0
-                cs_per_min = round(cs_total / duration_min, 2) if duration_min > 0 else 0.0
-                items = [int(player_data.get(f"item{i}", 0)) for i in range(6)]
-
-                collected_rows.append({
-                    "match_id": match_id,
-                    "game_creation": int(info.get("gameCreation", 0)),
-                    "champion": player_data.get("championName", "Unknown"),
-                    "role": role_display,
-                    "match_type": match_type_check,
-                    "win": bool(player_data.get("win", False)),
-                    "kills": kills,
-                    "deaths": deaths,
-                    "assists": assists,
-                    "kda": round((kills + assists) / max(1, deaths), 2),
-                    "cs_total": cs_total,
-                    "cs_per_min": cs_per_min,
-                    "vision_score": int(player_data.get("visionScore", 0)),
-                    "queue_id": queue_id,
-                    "game_duration_min": duration_min,
-                    "items": items,
-                })
-
-            except requests.exceptions.RequestException:
-                continue
-
-            time.sleep(0.12)
-
-        start += chunk_size
-
-    df = pd.DataFrame(collected_rows)
-    if not df.empty:
-        df = df.sort_values("game_creation", ascending=False).reset_index(drop=True)
-
-    return df, solo_entry, flex_entry
-
-def apply_local_filters(df: pd.DataFrame, match_type: str, role: str) -> pd.DataFrame:
-    filtered = df.copy()
-
-    if match_type != "All":
-        filtered = filtered[filtered["match_type"] == match_type]
-
-    if role != "All":
-        filtered = filtered[filtered["role"] == role]
-
-    return filtered.reset_index(drop=True)
-
-# ----------------------------
-# Analysis helpers
-# ----------------------------
-def compute_recent_form(filtered_df: pd.DataFrame, champion_name: str) -> float:
-    champ_games = (
-        filtered_df[filtered_df["champion"] == champion_name]
-        .sort_values("game_creation", ascending=False)
-        .head(5)
-    )
-
-    if champ_games.empty:
-        return 0.0
-
-    recent_wr = champ_games["win"].mean() * 100
-    recent_kda = champ_games["kda"].mean()
-    return (recent_wr * 0.7) + (min(recent_kda, 8) / 8 * 30)
-
-def build_tiers(champion_summary: pd.DataFrame, filtered_df: pd.DataFrame) -> pd.DataFrame:
-    if champion_summary.empty:
-        return champion_summary
-
-    max_games = champion_summary["games"].max() or 1
-    max_kda = champion_summary["avg_kda"].max() or 1
-
-    def compute_score(row):
-        recent_form = compute_recent_form(filtered_df, row["champion"])
-        norm_games = (row["games"] / max_games) * 100
-        norm_kda = (row["avg_kda"] / max_kda) * 100
-        return round(
-            row["win_rate"] * 0.45 +
-            norm_games * 0.25 +
-            norm_kda * 0.20 +
-            recent_form * 0.10,
-            1
-        )
-
-    champion_summary = champion_summary.copy()
-    champion_summary["tier_score"] = champion_summary.apply(compute_score, axis=1)
-    champion_summary["tier"] = pd.cut(
-        champion_summary["tier_score"],
-        bins=[0, 58, 68, 78, 100],
-        labels=["C", "B", "A", "S"],
-        include_lowest=True
-    ).astype(str)
-
-    return champion_summary.sort_values(
-        ["tier_score", "games"],
-        ascending=[False, False]
-    ).reset_index(drop=True)
-
-# ----------------------------
-# Simple match renderer
-# ----------------------------
-def render_recent_match_rows(filtered_df: pd.DataFrame):
-    if filtered_df.empty:
-        st.info("No recent matches for this filter.")
-        return
-
-    for _, match in filtered_df.iterrows():
-        result = "Win" if match["win"] else "Loss"
-        kda_line = f'{match["kills"]}/{match["deaths"]}/{match["assists"]}'
-        st.markdown(
-            f"""
-            <div class="metric-card" style="margin-bottom: 0.6rem;">
-                <div style="font-size:1.02rem;font-weight:700;">{match["champion"]} • {result}</div>
-                <div style="color:#cbd5e1;font-size:0.92rem;">
-                    {match["role"]} • {match["match_type"]} • KDA {kda_line} • {match["kda"]} KDA • {match["cs_per_min"]} CS/min
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+def platform_to_regional(platform_code: str) -> str:
+    if platform_code in ["na1", "br1", "la1", "la2"]:
+        return "americas"
+    if platform_code in ["euw1", "eun1", "tr1", "ru"]:
+        return "europe"
+    if platform_code in ["kr", "jp1"]:
+        return "asia"
+    if platform_code in ["oc1"]:
+        return "sea"
+    return "americas"
 
 # ----------------------------
 # Header
 # ----------------------------
 logo_path = Path("outdraft_logo.png")
-logo_exists = logo_path.exists()
 
 st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 
-if logo_exists:
+if logo_path.exists():
     c1, c2, c3 = st.columns([1, 2.0, 1])
     with c2:
         st.markdown('<div class="logo-backdrop">', unsafe_allow_html=True)
@@ -442,172 +312,869 @@ else:
     st.title("Outdraft")
 
 st.markdown(
-    '<div class="hero-subtitle">Built to reduce draft anxiety and surface your smartest picks fast.</div>',
+    '<div class="hero-subtitle">Built to reduce draft anxiety and surface your smartest picks fast. Outdraft focuses on clarity, confidence, and your actual champion pool.</div>',
     unsafe_allow_html=True
 )
 
 search_col1, search_col2, search_col3, search_col4, search_col5 = st.columns([2.2, 1.0, 1.1, 0.8, 0.8])
-
 with search_col1:
     riot_id_input = st.text_input("Riot ID", "HE TAKE ME#OHNO")
 with search_col2:
     region_label = st.selectbox("Region", list(PLATFORM_OPTIONS.keys()), index=0)
 with search_col3:
-    queue_under_logo = st.selectbox("Queue / Match Type", ["All", "Ranked Solo", "Ranked Flex", "Normals", "ARAM"])
+    queue_under_logo = st.selectbox(
+        "Queue / Match Type",
+        ["All", "Ranked Solo", "Ranked Flex", "Normals", "ARAM"]
+    )
 with search_col4:
-    analyze_clicked = st.button("Analyze", use_container_width=True, type="primary")
+    analyze_clicked = st.button("Analyze", use_container_width=True)
 with search_col5:
     refresh_clicked = st.button("Refresh", use_container_width=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 platform_region = PLATFORM_OPTIONS[region_label]
-regional_region = PLATFORM_TO_REGIONAL[platform_region]
+regional_region = platform_to_regional(platform_region)
+
+# ----------------------------
+# Utility funcs
+# ----------------------------
+def format_rank(entry):
+    if not entry:
+        return "Unranked / wrong region / lookup failed"
+    return f'{entry.get("tier", "")} {entry.get("rank", "")} • {entry.get("leaguePoints", 0)} LP'
+
+def parse_csv_text(text):
+    return [x.strip() for x in text.split(",") if x.strip()]
+
+def split_riot_id(full_input):
+    full_input = full_input.strip()
+    if "#" in full_input:
+        name, tag = full_input.split("#", 1)
+        return name.strip(), tag.strip()
+    return full_input, ""
+
+def classify_match_type(queue_id, game_mode):
+    if queue_id == 420:
+        return "Ranked Solo"
+    elif queue_id == 440:
+        return "Ranked Flex"
+    elif queue_id == 450 or game_mode == "ARAM":
+        return "ARAM"
+    elif queue_id in [400, 430]:
+        return "Normals"
+    else:
+        return "Other"
+
+def normalize_role(role_value):
+    if not role_value:
+        return "UNKNOWN"
+    role_value = role_value.upper()
+    if role_value in ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]:
+        return role_value
+    return "UNKNOWN"
+
+def display_role_name(role_value):
+    role_map = {
+        "TOP": "Top",
+        "JUNGLE": "Jungle",
+        "MIDDLE": "Mid",
+        "BOTTOM": "ADC",
+        "UTILITY": "Support",
+        "UNKNOWN": "Unknown"
+    }
+    return role_map.get(role_value, role_value)
+
+def champion_to_ddragon_name(champion_name):
+    special_map = {
+        "FiddleSticks": "Fiddlesticks",
+        "MonkeyKing": "MonkeyKing",
+        "KogMaw": "KogMaw",
+        "KhaZix": "Khazix",
+        "RekSai": "RekSai",
+        "Belveth": "Belveth",
+        "Velkoz": "Velkoz",
+        "TahmKench": "TahmKench",
+        "AurelionSol": "AurelionSol",
+        "LeeSin": "LeeSin",
+        "JarvanIV": "JarvanIV",
+        "MissFortune": "MissFortune",
+        "XinZhao": "XinZhao",
+        "TwistedFate": "TwistedFate",
+        "MasterYi": "MasterYi",
+        "DrMundo": "DrMundo",
+        "LeBlanc": "Leblanc",
+        "Cho'Gath": "Chogath",
+        "Kai'Sa": "Kaisa",
+        "K'Sante": "KSante",
+        "Vel'Koz": "Velkoz",
+        "Bel'Veth": "Belveth",
+        "Rek'Sai": "RekSai",
+        "Kha'Zix": "Khazix",
+    }
+    return special_map.get(champion_name, champion_name)
+
+@st.cache_data(show_spinner=False)
+def get_latest_ddragon_version():
+    response = requests.get("https://ddragon.leagueoflegends.com/api/versions.json", timeout=10)
+    response.raise_for_status()
+    return response.json()[0]
+
+@st.cache_data(show_spinner=False)
+def get_item_data():
+    version = get_latest_ddragon_version()
+    url = f"https://ddragon.leagueoflegends.com/cdn/{version}/data/en_US/item.json"
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    return response.json().get("data", {})
+
+def get_item_icon_url(item_id):
+    version = get_latest_ddragon_version()
+    return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/item/{item_id}.png"
+
+def get_champion_square_url(champion_name):
+    version = get_latest_ddragon_version()
+    champ = champion_to_ddragon_name(champion_name)
+    return f"https://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champ}.png"
+
+def compute_recent_form(filtered_df, champion_name):
+    champ_games = filtered_df[filtered_df["champion"] == champion_name].copy()
+    if champ_games.empty:
+        return 0.0
+    champ_games = champ_games.head(min(5, len(champ_games)))
+    recent_wr = champ_games["win"].mean() * 100
+    recent_kda = champ_games["kda"].mean()
+    return (recent_wr * 0.7) + (min(recent_kda, 8) / 8 * 30)
+
+def build_tiers(champion_summary, filtered_df):
+    if champion_summary.empty:
+        return champion_summary
+
+    working = champion_summary.copy()
+    max_games = working["games"].max() if working["games"].max() > 0 else 1
+    max_kda = working["avg_kda"].max() if working["avg_kda"].max() > 0 else 1
+
+    scores = []
+    for _, row in working.iterrows():
+        recent_form = compute_recent_form(filtered_df, row["champion"])
+        normalized_games = (row["games"] / max_games) * 100
+        normalized_kda = (row["avg_kda"] / max_kda) * 100 if max_kda > 0 else 0
+
+        score = (
+            row["win_rate"] * 0.45 +
+            normalized_games * 0.25 +
+            normalized_kda * 0.20 +
+            recent_form * 0.10
+        )
+        scores.append(round(score, 1))
+
+    working["tier_score"] = scores
+
+    def score_to_tier(score):
+        if score >= 78:
+            return "S"
+        elif score >= 68:
+            return "A"
+        elif score >= 58:
+            return "B"
+        else:
+            return "C"
+
+    working["tier"] = working["tier_score"].apply(score_to_tier)
+    return working.sort_values(by=["tier_score", "games"], ascending=[False, False])
+
+def build_recommendations(tier_df, ally_picks, enemy_picks, bans):
+    if tier_df.empty:
+        return pd.DataFrame()
+
+    unavailable = set(ally_picks + enemy_picks + bans)
+    recs = tier_df[~tier_df["champion"].isin(unavailable)].copy()
+
+    if recs.empty:
+        return recs
+
+    max_games = recs["games"].max() if recs["games"].max() > 0 else 1
+
+    recs["comfort_score"] = (
+        recs["tier_score"] * 0.55 +
+        (recs["games"] / max_games) * 100 * 0.45
+    ).round(1)
+
+    recs["blind_score"] = (
+        recs["win_rate"] * 0.50 +
+        recs["tier_score"] * 0.30 +
+        (recs["games"] / max_games) * 100 * 0.20
+    ).round(1)
+
+    recs["overall_score"] = (
+        recs["tier_score"] * 0.70 +
+        recs["comfort_score"] * 0.20 +
+        recs["blind_score"] * 0.10
+    ).round(1)
+
+    return recs.sort_values(by="overall_score", ascending=False)
+
+def get_unique_pick(df, score_col, used):
+    if df.empty:
+        return None
+    for _, row in df.sort_values(by=score_col, ascending=False).iterrows():
+        if row["champion"] not in used:
+            used.add(row["champion"])
+            return row
+    return None
+
+def get_confidence_label(row):
+    if row is None:
+        return ("No Data", "confidence-low")
+    games = int(row["games"])
+    wr = float(row["win_rate"])
+    if games >= 12 and wr >= 58:
+        return ("High Confidence", "confidence-high")
+    elif games >= 6 and wr >= 50:
+        return ("Solid Confidence", "confidence-medium")
+    else:
+        return ("Low Sample", "confidence-low")
+
+def generate_pick_reasons(row):
+    if row is None:
+        return []
+    reasons = []
+    if row["games"] >= 12:
+        reasons.append(f'{int(row["games"])} games in this filter')
+    elif row["games"] >= 6:
+        reasons.append(f'{int(row["games"])} recent games on this champ')
+
+    if row["win_rate"] >= 60:
+        reasons.append(f'{row["win_rate"]}% win rate')
+    elif row["win_rate"] >= 52:
+        reasons.append(f'positive win rate at {row["win_rate"]}%')
+
+    if row["avg_kda"] >= 4:
+        reasons.append(f'{row["avg_kda"]} average KDA')
+    elif row["avg_kda"] >= 3:
+        reasons.append(f'stable {row["avg_kda"]} KDA')
+    return reasons[:3]
+
+def fetch_filtered_matches(puuid, selected_match_type, selected_role, desired_count, regional_region):
+    collected_rows = []
+    start = 0
+    chunk_size = 100
+    max_scan = 500
+
+    while len(collected_rows) < desired_count and start < max_scan:
+        ids_url = f"https://{regional_region}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={chunk_size}"
+        ids_response = requests.get(ids_url, headers=headers, timeout=20)
+
+        if ids_response.status_code != 200:
+            break
+
+        match_ids = ids_response.json()
+        if not match_ids:
+            break
+
+        for match_id in match_ids:
+            if len(collected_rows) >= desired_count:
+                break
+
+            match_url = f"https://{regional_region}.api.riotgames.com/lol/match/v5/matches/{match_id}"
+            match_response = requests.get(match_url, headers=headers, timeout=20)
+
+            if match_response.status_code != 200:
+                continue
+
+            match_data = match_response.json()
+            info = match_data.get("info", {})
+            participants = info.get("participants", [])
+
+            player_data = None
+            for participant in participants:
+                if participant.get("puuid") == puuid:
+                    player_data = participant
+                    break
+
+            if player_data is None:
+                continue
+
+            queue_id = info.get("queueId", -1)
+            game_mode = info.get("gameMode", "Unknown")
+            match_type = classify_match_type(queue_id, game_mode)
+
+            role_raw = normalize_role(player_data.get("teamPosition", "UNKNOWN"))
+            role_display = display_role_name(role_raw)
+
+            if selected_match_type != "All" and match_type != selected_match_type:
+                continue
+
+            if selected_role != "All" and role_display != selected_role:
+                continue
+
+            kills = player_data.get("kills", 0)
+            deaths = player_data.get("deaths", 0)
+            assists = player_data.get("assists", 0)
+            cs_total = player_data.get("totalMinionsKilled", 0) + player_data.get("neutralMinionsKilled", 0)
+            duration_min = round(info.get("gameDuration", 0) / 60, 1)
+            cs_per_min = round(cs_total / duration_min, 2) if duration_min > 0 else 0
+
+            items = [
+                player_data.get("item0", 0),
+                player_data.get("item1", 0),
+                player_data.get("item2", 0),
+                player_data.get("item3", 0),
+                player_data.get("item4", 0),
+                player_data.get("item5", 0),
+            ]
+
+            collected_rows.append({
+                "match_id": match_id,
+                "champion": player_data.get("championName", "Unknown"),
+                "role": role_display,
+                "match_type": match_type,
+                "win": player_data.get("win", False),
+                "kills": kills,
+                "deaths": deaths,
+                "assists": assists,
+                "kda": round((kills + assists) / max(1, deaths), 2),
+                "cs_total": cs_total,
+                "cs_per_min": cs_per_min,
+                "vision_score": player_data.get("visionScore", 0),
+                "queue_id": queue_id,
+                "game_duration_min": duration_min,
+                "items": items
+            })
+
+        start += chunk_size
+
+    return pd.DataFrame(collected_rows)
+
+def get_common_core_builds(df, champion_name, top_n=2):
+    champ_df = df[df["champion"] == champion_name].copy()
+    if champ_df.empty:
+        return []
+
+    build_counter = Counter()
+    for _, row in champ_df.iterrows():
+        items = [i for i in row["items"] if isinstance(i, int) and i > 0]
+        core = tuple(items[:3])
+        if len(core) >= 2:
+            build_counter[core] += 1
+
+    return build_counter.most_common(top_n)
+
+def render_recent_match_rows(filtered_df):
+    records = filtered_df.sort_values(by="match_id", ascending=False).to_dict("records")
+    for match in records:
+        icon_url = get_champion_square_url(match["champion"])
+        card_class = "match-card-win" if match["win"] else "match-card-loss"
+        result_text = "WIN" if match["win"] else "LOSS"
+
+        st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
+        col1, col2, col3, col4, col5 = st.columns([0.8, 2.2, 1.2, 1.4, 1.8])
+
+        with col1:
+            st.image(icon_url, width=52)
+        with col2:
+            st.markdown(
+                f"""
+                <div class="match-title" style="margin-bottom: 0.1rem;">{match["champion"]}</div>
+                <div class="match-line">{match["role"]} • {match["match_type"]}</div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col3:
+            st.markdown(
+                f"""
+                <div class="match-title" style="font-size: 0.95rem;">{result_text}</div>
+                <div class="match-line">{match["game_duration_min"]} min</div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col4:
+            st.markdown(
+                f"""
+                <div class="match-line">K / D / A</div>
+                <div class="match-title" style="font-size: 0.95rem;">{match["kills"]} / {match["deaths"]} / {match["assists"]}</div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col5:
+            st.markdown(
+                f"""
+                <div class="match-line">KDA: {match["kda"]}</div>
+                <div class="match-line">CS/min: {match["cs_per_min"]} • Vision: {match["vision_score"]}</div>
+                """,
+                unsafe_allow_html=True
+            )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+def render_mastery_strip(champion_summary_df):
+    top7 = champion_summary_df.sort_values(by=["games", "win_rate"], ascending=[False, False]).head(7).to_dict("records")
+    cols = st.columns(7)
+    for col, card in zip(cols, top7):
+        with col:
+            st.markdown('<div class="mastery-card">', unsafe_allow_html=True)
+            st.image(get_champion_square_url(card["champion"]), width=58)
+            st.markdown(f'<div class="mastery-name">{card["champion"]}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="mastery-stat">
+                    {int(card["games"])} games<br>
+                    {card["win_rate"]}% WR
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+def render_tier_column(df_tiers, tier_label, chip_text):
+    subset = df_tiers[df_tiers["tier"] == tier_label].head(5)
+    if subset.empty:
+        return
+    st.markdown('<div class="tier-card">', unsafe_allow_html=True)
+    st.markdown(f'<div class="tier-header">{tier_label} Tier</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="tier-chip">{chip_text}</div>', unsafe_allow_html=True)
+    for _, row in subset.iterrows():
+        st.markdown(
+            f"""
+            <div class="tier-line">
+                <strong>{row["champion"]}</strong><br>
+                Score: {row["tier_score"]} • WR: {row["win_rate"]}% • Games: {int(row["games"])}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def render_compact_pick_card(label, row, score_col):
+    if row is None:
+        return
+    st.markdown('<div class="compact-reco-card">', unsafe_allow_html=True)
+    st.markdown(f'<div class="compact-reco-label">{label}</div>', unsafe_allow_html=True)
+    conf_text, conf_class = get_confidence_label(row)
+    st.image(get_champion_square_url(row["champion"]), width=74)
+    st.markdown(f'<div class="compact-reco-name">{row["champion"]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="{conf_class}">{conf_text}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="compact-reco-stat">
+            {score_col.replace("_", " ").title()}: {row[score_col]}<br>
+            {int(row["games"])} games • {row["win_rate"]}% WR • {row["avg_kda"]} KDA
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    reasons = generate_pick_reasons(row)
+    for reason in reasons:
+        st.markdown(f'<div class="reason-line">• {reason}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+def make_bar_chart(labels, values, title, ylabel, color="#c8a75d"):
+    fig, ax = plt.subplots(figsize=(8.5, 4.4))
+    fig.patch.set_facecolor("#111827")
+    ax.set_facecolor("#111827")
+    bars = ax.bar(labels, values, color=color, edgecolor="#f8e7b0", linewidth=1.0)
+    ax.set_title(title, color="#f8e7b0", fontsize=14, pad=12, fontweight="bold")
+    ax.set_ylabel(ylabel, color="#d1d5db")
+    ax.tick_params(axis="x", colors="#e5e7eb", rotation=35)
+    ax.tick_params(axis="y", colors="#d1d5db")
+    for spine in ax.spines.values():
+        spine.set_color("#374151")
+    ax.grid(axis="y", linestyle="--", alpha=0.25, color="#9ca3af")
+    ax.set_axisbelow(True)
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height,
+            f"{height:.1f}",
+            ha="center",
+            va="bottom",
+            color="#f8e7b0",
+            fontsize=8.5,
+            fontweight="bold"
+        )
+    plt.tight_layout()
+    return fig
 
 # ----------------------------
 # Sidebar
 # ----------------------------
-with st.sidebar:
-    st.header("Filters")
-    role_filter = st.selectbox("Role", ["All", "Top", "Jungle", "Mid", "ADC", "Support"])
-    st.markdown("---")
-    st.subheader("Picks Context")
-    ally_picks = parse_csv_text(st.text_input("Ally picks", ""))
-    enemy_picks = parse_csv_text(st.text_input("Enemy picks", ""))
-    bans = parse_csv_text(st.text_input("Bans", ""))
+st.sidebar.header("Filters")
+role_filter = st.sidebar.selectbox(
+    "Role",
+    ["All", "Top", "Jungle", "Mid", "ADC", "Support"]
+)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Picks Context")
+ally_picks = parse_csv_text(st.sidebar.text_input("Ally picks", ""))
+enemy_picks = parse_csv_text(st.sidebar.text_input("Enemy picks", ""))
+bans = parse_csv_text(st.sidebar.text_input("Bans", ""))
+
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    '<div class="subtle-text">Tip: Match History is the most useful default view right now. Use Refresh after finishing a game.</div>',
+    unsafe_allow_html=True
+)
 
 # ----------------------------
-# Main logic
+# Session state
 # ----------------------------
 game_name, tag_line = split_riot_id(riot_id_input)
 match_type_filter = queue_under_logo
+filter_key = f"{game_name}|{tag_line}|{platform_region}|{match_type_filter}|{role_filter}"
+
+if "current_filter_key" not in st.session_state:
+    st.session_state.current_filter_key = filter_key
 
 if "games_to_show" not in st.session_state:
     st.session_state.games_to_show = 20
 
-if "last_identity_key" not in st.session_state:
-    st.session_state.last_identity_key = ""
+if filter_key != st.session_state.current_filter_key:
+    st.session_state.current_filter_key = filter_key
+    st.session_state.games_to_show = 20
 
-identity_key = f"{game_name}|{tag_line}|{platform_region}"
-trigger_analysis = analyze_clicked or refresh_clicked or (identity_key != st.session_state.last_identity_key)
+load_more_clicked = st.sidebar.button("Load More Games", use_container_width=True)
+if load_more_clicked:
+    st.session_state.games_to_show += 20
 
+trigger_analysis = analyze_clicked or refresh_clicked or "last_loaded_filter_key" in st.session_state
+
+# ----------------------------
+# Main
+# ----------------------------
 if trigger_analysis:
     if not game_name or not tag_line:
         st.error("Please enter a Riot ID like Name#TAG.")
         st.stop()
 
-    if refresh_clicked:
-        st.cache_data.clear()
+    st.session_state.last_loaded_filter_key = filter_key
 
-    st.session_state.last_identity_key = identity_key
+    with st.spinner("Pulling Riot data and building your profile..."):
+        debug_info = {}
 
-    with st.spinner("Pulling Riot data..."):
-        try:
-            account_data = fetch_account_by_riot_id(game_name, tag_line, regional_region)
-            puuid = account_data.get("puuid")
+        account_url = f"https://{regional_region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
+        account_response = requests.get(account_url, headers=headers, timeout=20)
+        debug_info["account_status"] = account_response.status_code
+        debug_info["account_url"] = account_url
 
-            if not puuid:
-                st.error("Could not resolve that Riot ID to a PUUID.")
-                st.stop()
+        if account_response.status_code != 200:
+            st.error(f"Account lookup failed. Status code: {account_response.status_code}")
+            try:
+                st.json(account_response.json())
+            except Exception:
+                st.write(account_response.text)
+            st.stop()
 
-            raw_df, solo_entry, flex_entry = fetch_raw_matches(
-                puuid=puuid,
-                platform_region=platform_region,
-                regional_region=regional_region,
-                count=st.session_state.games_to_show
+        puuid = account_response.json()["puuid"]
+
+        solo_entry = None
+        flex_entry = None
+
+        summoner_url = f"https://{platform_region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
+        summoner_response = requests.get(summoner_url, headers=headers, timeout=20)
+        debug_info["summoner_status"] = summoner_response.status_code
+        debug_info["summoner_url"] = summoner_url
+
+        summoner_id = None
+        if summoner_response.status_code == 200:
+            summoner_data = summoner_response.json()
+            summoner_id = summoner_data.get("id")
+            debug_info["summoner_has_id"] = bool(summoner_id)
+        else:
+            debug_info["summoner_body"] = summoner_response.text[:500]
+
+        if summoner_id:
+            league_url = f"https://{platform_region}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_id}"
+            league_response = requests.get(league_url, headers=headers, timeout=20)
+            debug_info["league_status"] = league_response.status_code
+            debug_info["league_url"] = league_url
+
+            if league_response.status_code == 200:
+                league_entries = league_response.json()
+                debug_info["league_entries_count"] = len(league_entries) if isinstance(league_entries, list) else "non-list"
+
+                if isinstance(league_entries, list):
+                    solo_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_SOLO_5x5"), None)
+                    flex_entry = next((e for e in league_entries if e.get("queueType") == "RANKED_FLEX_SR"), None)
+                    debug_info["solo_found"] = bool(solo_entry)
+                    debug_info["flex_found"] = bool(flex_entry)
+                    debug_info["league_entries_raw"] = league_entries
+            else:
+                debug_info["league_body"] = league_response.text[:500]
+        else:
+            debug_info["league_status"] = "skipped_no_summoner_id"
+
+        filtered_df = fetch_filtered_matches(
+            puuid=puuid,
+            selected_match_type=match_type_filter,
+            selected_role=role_filter,
+            desired_count=st.session_state.games_to_show,
+            regional_region=regional_region
+        )
+
+        if filtered_df.empty:
+            st.warning("No matches found for that filter combination.")
+            st.stop()
+
+        champion_summary = (
+            filtered_df.groupby("champion")
+            .agg(
+                games=("champion", "count"),
+                wins=("win", "sum"),
+                avg_kda=("kda", "mean"),
+                avg_cs_per_min=("cs_per_min", "mean")
+            )
+            .reset_index()
+        )
+
+        champion_summary["losses"] = champion_summary["games"] - champion_summary["wins"]
+        champion_summary["win_rate"] = ((champion_summary["wins"] / champion_summary["games"]) * 100).round(1)
+        champion_summary["avg_kda"] = champion_summary["avg_kda"].round(2)
+        champion_summary["avg_cs_per_min"] = champion_summary["avg_cs_per_min"].round(2)
+
+        tier_df = build_tiers(champion_summary.rename(columns={"avg_cs_per_min": "avg_cs"}), filtered_df)
+        tier_df = tier_df.rename(columns={"avg_cs": "avg_cs_per_min"})
+
+        rec_df = build_recommendations(tier_df.rename(columns={"avg_cs_per_min": "avg_cs"}), ally_picks, enemy_picks, bans)
+        if not rec_df.empty and "avg_cs" in rec_df.columns:
+            rec_df = rec_df.rename(columns={"avg_cs": "avg_cs_per_min"})
+
+        total_games = len(filtered_df)
+        total_wins = int(filtered_df["win"].sum())
+        total_losses = total_games - total_wins
+        overall_winrate = round((total_wins / total_games) * 100, 1)
+        avg_kda = round(filtered_df["kda"].mean(), 2)
+        avg_cspm = round(filtered_df["cs_per_min"].mean(), 2)
+
+        chips = [
+            region_label,
+            match_type_filter,
+            role_filter,
+            f"Last {len(filtered_df)} games"
+        ]
+        if ally_picks:
+            chips.append("Ally: " + ", ".join(ally_picks[:3]))
+        if enemy_picks:
+            chips.append("Enemy: " + ", ".join(enemy_picks[:3]))
+        if bans:
+            chips.append("Bans: " + ", ".join(bans[:3]))
+
+        chip_html = "".join([f'<span class="filter-chip">{chip}</span>' for chip in chips])
+        st.markdown(chip_html, unsafe_allow_html=True)
+
+        tabs = st.tabs(["Match History", "Recommendations", "Picks", "Mastery", "Graphs", "Debug"])
+
+        with tabs[0]:
+            left_col, right_col = st.columns([1, 2.2], gap="large")
+
+            with left_col:
+                st.subheader("Performance Snapshot")
+                a, b = st.columns(2)
+                a.metric("Games", total_games)
+                b.metric("Win Rate", f"{overall_winrate}%")
+
+                c, d = st.columns(2)
+                c.metric("Wins", total_wins)
+                d.metric("Losses", total_losses)
+
+                e, f = st.columns(2)
+                e.metric("Avg KDA", avg_kda)
+                f.metric("Avg CS/min", avg_cspm)
+
+                st.metric("Solo Rank", format_rank(solo_entry))
+                st.metric("Flex Rank", format_rank(flex_entry))
+
+            with right_col:
+                st.subheader(f"Recent Matches ({len(filtered_df)} loaded)")
+                render_recent_match_rows(filtered_df)
+
+        with tabs[1]:
+            st.subheader("Recommendations")
+
+            reco_cards = []
+
+            if not champion_summary.empty:
+                most_played = champion_summary.sort_values(by="games", ascending=False).iloc[0]
+                reco_cards.append({
+                    "title": "Most Reliable Pick",
+                    "champion": most_played["champion"],
+                    "text": f'Your most-played champion here: {int(most_played["games"])} games.'
+                })
+
+                best_wr = champion_summary[champion_summary["games"] >= 3].sort_values(by="win_rate", ascending=False)
+                if not best_wr.empty:
+                    best_wr_row = best_wr.iloc[0]
+                    reco_cards.append({
+                        "title": "Best Win Rate",
+                        "champion": best_wr_row["champion"],
+                        "text": f'{best_wr_row["win_rate"]}% win rate across {int(best_wr_row["games"])} games.'
+                    })
+
+                best_form = champion_summary[champion_summary["games"] >= 2].sort_values(by="avg_kda", ascending=False)
+                if not best_form.empty:
+                    best_form_row = best_form.iloc[0]
+                    reco_cards.append({
+                        "title": "Strongest Current Form",
+                        "champion": best_form_row["champion"],
+                        "text": f'{best_form_row["avg_kda"]} average KDA in this filter.'
+                    })
+
+            if reco_cards:
+                cols = st.columns(len(reco_cards))
+                for col, reco in zip(cols, reco_cards):
+                    with col:
+                        st.markdown('<div class="compact-reco-card">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="compact-reco-label">{reco["title"]}</div>', unsafe_allow_html=True)
+                        st.image(get_champion_square_url(reco["champion"]), width=74)
+                        st.markdown(f'<div class="compact-reco-name">{reco["champion"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="compact-reco-stat">{reco["text"]}</div>', unsafe_allow_html=True)
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+            st.subheader("Simple Takeaways")
+            takeaways = []
+            if overall_winrate >= 55:
+                takeaways.append("You are performing well in this filter. Lean into your most-played comfort picks.")
+            elif overall_winrate < 50:
+                takeaways.append("Your results in this filter are weaker right now. Favor your highest-sample champions.")
+
+            if not champion_summary.empty:
+                highest_sample = champion_summary.sort_values(by="games", ascending=False).iloc[0]["champion"]
+                takeaways.append(f"Your most repeatable option here is {highest_sample} based on sample size.")
+
+            if avg_cspm >= 7:
+                takeaways.append("Your farming is strong in this filter. Scaling picks may fit you well.")
+            elif avg_cspm < 5.5:
+                takeaways.append("Your CS/min is lower here. Simpler comfort picks may help stabilize lane phase.")
+
+            for takeaway in takeaways[:3]:
+                st.markdown(f"- {takeaway}")
+
+            present_tiers = [tier for tier in ["S", "A", "B", "C"] if not tier_df[tier_df["tier"] == tier].empty]
+            if present_tiers:
+                st.subheader("Tier Breakdown")
+                tier_cols = st.columns(len(present_tiers))
+                tier_labels = {
+                    "S": "Best current picks",
+                    "A": "Strong comfort options",
+                    "B": "Playable options",
+                    "C": "Low confidence"
+                }
+                for col, tier in zip(tier_cols, present_tiers):
+                    with col:
+                        render_tier_column(tier_df.rename(columns={"avg_cs_per_min": "avg_cs"}), tier, tier_labels[tier])
+
+        with tabs[2]:
+            st.subheader("Picks")
+
+            used_champs = set()
+            rec_df_for_cards = rec_df.rename(columns={"avg_cs_per_min": "avg_cs"}) if not rec_df.empty else rec_df
+            top_overall = get_unique_pick(rec_df_for_cards, "overall_score", used_champs) if not rec_df_for_cards.empty else None
+            top_comfort = get_unique_pick(rec_df_for_cards, "comfort_score", used_champs) if not rec_df_for_cards.empty else None
+            top_blind = get_unique_pick(rec_df_for_cards, "blind_score", used_champs) if not rec_df_for_cards.empty else None
+
+            top_cards = []
+            if top_overall is not None:
+                top_cards.append(("Best Overall", top_overall, "overall_score"))
+            if top_comfort is not None:
+                top_cards.append(("Best Comfort", top_comfort, "comfort_score"))
+            if top_blind is not None:
+                top_cards.append(("Best Blind", top_blind, "blind_score"))
+
+            if top_cards:
+                cols = st.columns(len(top_cards))
+                for col, (label, row, score_col) in zip(cols, top_cards):
+                    with col:
+                        render_compact_pick_card(label, row, score_col)
+
+            st.subheader("Optimal Core Build Options")
+            item_data = get_item_data()
+
+            top_build_targets = []
+            for row in [top_overall, top_comfort, top_blind]:
+                if row is not None:
+                    top_build_targets.append(row["champion"])
+            top_build_targets = list(dict.fromkeys(top_build_targets))
+
+            if top_build_targets:
+                build_cols = st.columns(len(top_build_targets))
+                for col, champ in zip(build_cols, top_build_targets):
+                    with col:
+                        st.markdown('<div class="build-card">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="build-title">{champ}</div>', unsafe_allow_html=True)
+                        st.image(get_champion_square_url(champ), width=64)
+
+                        common_builds = get_common_core_builds(filtered_df, champ, top_n=2)
+                        if common_builds:
+                            for build_tuple, count in common_builds:
+                                item_cols = st.columns(len(build_tuple))
+                                for item_col, item_id in zip(item_cols, build_tuple):
+                                    with item_col:
+                                        st.image(get_item_icon_url(item_id), width=42)
+                                item_names = [item_data.get(str(item_id), {}).get("name", str(item_id)) for item_id in build_tuple]
+                                st.caption(f"{count} games")
+                                st.caption(" / ".join(item_names[:3]))
+                        else:
+                            st.caption("No clear build sample yet.")
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+        with tabs[3]:
+            st.subheader("Champion Mastery")
+            render_mastery_strip(champion_summary)
+
+            mastery_table = champion_summary.copy()
+            mastery_table["champion_art"] = mastery_table["champion"].apply(get_champion_square_url)
+            mastery_table = mastery_table[
+                ["champion_art", "champion", "games", "wins", "losses", "win_rate", "avg_kda", "avg_cs_per_min"]
+            ]
+
+            st.dataframe(
+                mastery_table.sort_values(by=["games", "win_rate"], ascending=[False, False]),
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "champion_art": st.column_config.ImageColumn("Champion", width="small"),
+                    "champion": "Name",
+                    "games": "Games",
+                    "wins": "Wins",
+                    "losses": "Losses",
+                    "win_rate": "Win Rate %",
+                    "avg_kda": "Avg KDA",
+                    "avg_cs_per_min": "Avg CS/min"
+                }
             )
 
-            if raw_df.empty:
-                st.warning("No matches found.")
-                st.stop()
+        with tabs[4]:
+            st.subheader("Graphs")
 
-            st.session_state.raw_df = raw_df
-            st.session_state.solo_entry = solo_entry
-            st.session_state.flex_entry = flex_entry
+            graph_cols = st.columns(2)
+            top_champs = champion_summary.sort_values(by="games", ascending=False).head(8)
+            top_winrate = champion_summary.sort_values(by="win_rate", ascending=False).head(8)
 
-        except requests.exceptions.RequestException as e:
-            msg = str(e)
-            if "429" in msg:
-                st.warning("Riot API rate limit hit. Wait a few seconds and try again.")
-            else:
-                st.error(f"API Error: {e}")
-            st.stop()
-        except Exception as e:
-            st.error(f"Analysis failed: {e}")
-            st.stop()
+            with graph_cols[0]:
+                if not top_champs.empty:
+                    fig1 = make_bar_chart(
+                        top_champs["champion"],
+                        top_champs["games"],
+                        "Top Champions by Games Played",
+                        "Games"
+                    )
+                    st.pyplot(fig1)
 
-if "raw_df" in st.session_state:
-    filtered_df = apply_local_filters(
-        st.session_state.raw_df,
-        match_type=match_type_filter,
-        role=role_filter
-    )
+            with graph_cols[1]:
+                if not top_winrate.empty:
+                    fig2 = make_bar_chart(
+                        top_winrate["champion"],
+                        top_winrate["win_rate"],
+                        "Top Champion Win Rates",
+                        "Win Rate %",
+                        color="#6f86a6"
+                    )
+                    st.pyplot(fig2)
 
-    solo_entry = st.session_state.get("solo_entry")
-    flex_entry = st.session_state.get("flex_entry")
-
-    if filtered_df.empty:
-        st.warning("No matches found for that filter.")
-        st.stop()
-
-    champion_summary = (
-        filtered_df.groupby("champion")
-        .agg(
-            games=("champion", "count"),
-            wins=("win", "sum"),
-            avg_kda=("kda", "mean"),
-            avg_cs_per_min=("cs_per_min", "mean")
-        )
-        .reset_index()
-    )
-
-    champion_summary["win_rate"] = (
-        champion_summary["wins"] / champion_summary["games"] * 100
-    ).round(1)
-
-    champion_summary["avg_kda"] = champion_summary["avg_kda"].round(2)
-    champion_summary["avg_cs_per_min"] = champion_summary["avg_cs_per_min"].round(2)
-
-    tier_df = build_tiers(champion_summary, filtered_df)
-
-    total_games = len(filtered_df)
-    total_wins = int(filtered_df["win"].sum())
-    overall_winrate = round((total_wins / total_games) * 100, 1)
-
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Games", total_games)
-    with col2:
-        st.metric("Win Rate", f"{overall_winrate}%")
-    with col3:
-        st.metric("Solo Rank", format_rank(solo_entry))
-    with col4:
-        st.metric("Flex Rank", format_rank(flex_entry))
-
-    tab1, tab2 = st.tabs(["Overview", "Recent Matches"])
-
-    with tab1:
-        st.subheader("Champion Summary")
-        st.dataframe(
-            tier_df[
-                [
-                    "champion",
-                    "games",
-                    "wins",
-                    "win_rate",
-                    "avg_kda",
-                    "avg_cs_per_min",
-                    "tier",
-                    "tier_score"
-                ]
-            ],
-            use_container_width=True,
-            hide_index=True
-        )
-
-    with tab2:
-        st.subheader("Recent Matches")
-        render_recent_match_rows(filtered_df.head(20))
+        with tabs[5]:
+            st.subheader("Rank Lookup Debug")
+            st.write("Use this to verify whether the selected region is correct.")
+            st.json(debug_info)
 
 else:
-    st.info("Enter Riot ID and click Analyze.")
+    st.info("Enter a Riot ID under the logo, choose region and queue, then click Analyze.")
